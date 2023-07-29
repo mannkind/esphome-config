@@ -47,27 +47,3 @@ jobs:
         with:
           name: esphome
           path: output
-
-  publish:
-    name: Publish new firmware and website to GitHub Pages
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          path: output
-          name: esphome
-
-      - name: Create single manifest.json
-        run: |
-          jq -s '{"name": "esphome", "version": "${{ needs.build.outputs.esphome-version }}", "home_assistant_domain": "esphome", "new_install_skip_erase": false, "builds":.}' output/*/manifest.json > output/manifest.json
-
-      - run: cp -R static/* output
-
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages
-          folder: output
-          clean: true
