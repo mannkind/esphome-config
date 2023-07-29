@@ -1,0 +1,7 @@
+<<: !include templates/global.yaml
+<<: !include templates/co2.yaml
+
+substitutions:
+  slug: co2-bedrooms
+  name: CO2 Bedrooms
+

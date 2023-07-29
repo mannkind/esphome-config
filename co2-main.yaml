@@ -1,0 +1,6 @@
+<<: !include templates/global.yaml
+<<: !include templates/co2.yaml
+
+substitutions:
+  slug: co2-main
+  name: CO2 Main

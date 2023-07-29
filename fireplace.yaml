@@ -1,0 +1,27 @@
+<<: !include templates/global.yaml
+
+substitutions:
+  slug: fireplace
+  name: Fireplace
+
+esphome:
+  name: ${slug}
+
+esp8266:
+  board: d1_mini
+
+binary_sensor:   
+  - platform: status
+    name: ${name} Status
+
+switch:
+  - platform: gpio
+    name: ${name}
+    icon: mdi:fire
+    pin:
+      number: D2
+      inverted: True
+
+button:
+  - platform: restart
+    name: ${name} Restart

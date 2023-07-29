@@ -1,0 +1,47 @@
+
+esphome:
+  name: ${slug}
+
+esp8266:
+  board: esp8285
+  restore_from_flash: true
+
+dallas:
+  pin: GPIO3
+  update_interval: 37s
+
+# Individual sensors
+sensor:
+  - platform: dallas
+    name: ${name} Temperature
+    address: ${dallas_address}
+    filters:
+      - lambda: return (x * (9.0/5.0) + 32.0) - 4.0; # C to F, - adjustment
+    unit_of_measurement: "°F"
+
+binary_sensor:
+  - platform: gpio
+    id: btn_sensor
+    internal: true
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      then:
+        - switch.toggle: relay
+  
+  - platform: status
+    name: ${name} Status
+
+switch:
+  - platform: gpio
+    name: ${name} Switch
+    id: relay
+    icon: mdi:toggle-switch
+    pin: GPIO12
+    restore_mode: RESTORE_DEFAULT_OFF
+
+button:
+  - platform: restart
+    name: ${name} Restart

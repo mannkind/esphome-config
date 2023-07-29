@@ -1,0 +1,71 @@
+<<: !include templates/global.yaml
+
+substitutions:
+  slug: outdoor-patio-shades
+  name: Outdoor Patio Shades
+
+esphome:
+  name: ${slug}
+
+esp32:
+  board: wemos_d1_mini32
+
+# Individual sensors
+output:
+  - platform: gpio
+    id: ch_up
+    pin:
+      number: GPIO16
+
+  - platform: gpio
+    id: ch_down
+    pin:
+      number: GPIO18
+
+  - platform: gpio
+    id: down
+    pin:
+      number: GPIO19
+
+  - platform: gpio
+    id: stop
+    pin:
+      number: GPIO23
+
+  - platform: gpio
+    id: up
+    pin:
+      number: GPIO5
+
+button:
+  - platform: output
+    name: ${name} Up
+    output: up
+    duration: 500ms
+  
+  - platform: output
+    name: ${name} Down
+    output: down
+    duration: 500ms
+  
+  - platform: output
+    name: ${name} Stop
+    output: stop
+    duration: 500ms
+
+  - platform: output
+    name: ${name} Channel Down
+    output: ch_down
+    duration: 500ms
+
+  - platform: output
+    name: ${name} Channel Up
+    output: ch_up
+    duration: 500ms
+
+  - platform: restart
+    name: ${name} Restart
+
+binary_sensor:
+  - platform: status
+    name: ${name} Status

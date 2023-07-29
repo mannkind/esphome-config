@@ -1,0 +1,39 @@
+<<: !include templates/global.yaml
+
+substitutions:
+  slug: treat-dispenser
+  name: Treat Dispenser
+
+esphome:
+  name: ${slug}
+
+esp8266:
+  board: d1_mini
+
+servo:
+  - id: treat_servo
+    output: treat_servo_output
+
+output:
+  - platform: esp8266_pwm
+    id: treat_servo_output
+    pin: D3
+    frequency: 50 Hz
+
+button:
+  - platform: template
+    name: ${name}
+    id: pulse
+    on_press:
+      - servo.write:
+          id: treat_servo
+          level: -1
+      - delay: 0.162s
+      - servo.detach: treat_servo
+
+  - platform: restart
+    name: ${name} Restart
+
+binary_sensor:   
+  - platform: status
+    name: ${name} Status

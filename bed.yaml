@@ -1,0 +1,52 @@
+<<: !include templates/global.yaml
+
+substitutions:
+  slug: bed
+  name: Bed
+
+esphome:
+  name: ${slug}
+
+esp8266:
+  board: d1_mini
+
+button:
+  - platform: restart
+    name: ${name} Restart
+
+sensor:
+  - platform: hx711
+    id: bed
+    name: ${name} Raw Value
+    icon: mdi:weight-pound
+    dout_pin: D1
+    clk_pin: D2
+    update_interval: 10s
+    gain: 128
+    filters:
+      - calibrate_linear:
+          - -3720164 -> 0
+          - -5034565 -> 148 
+    unit_of_measurement: lbs
+
+binary_sensor:
+  - platform: status
+    name: ${name} Status
+
+  - platform: template
+    name: ${name} Occupied mandyj33 
+    device_class: occupancy
+    lambda: |-
+      return (
+        (135 < id(bed).state && id(bed).state < 155) ||
+        300 < id(bed).state
+      );
+
+  - platform: template
+    name: ${name} Occupied mannkind
+    device_class: occupancy
+    lambda: |-
+      return (
+        (170 < id(bed).state && id(bed).state < 190) ||
+        300 < id(bed).state
+      );

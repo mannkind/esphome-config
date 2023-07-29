@@ -1,0 +1,7 @@
+<<: !include templates/global.yaml
+<<: !include templates/sonoff-S20-temp.yaml
+
+substitutions:
+  slug: outlet-003
+  name: Outlet 003
+  dallas_address: "0xC604175411BBFF28"
