@@ -13,6 +13,7 @@
 		"--net=host",
 		"--device=/dev/ttyUSB0",
 		"--device=/dev/ttyACM0",
-		"--device=/dev/ttyACM1"
+		"--device=/dev/ttyACM1",
+		"--device=/dev/cu.usbserial-0192A636"
 	]
 }

@@ -1,0 +1,63 @@
+<<: !include templates/global.yaml
+
+substitutions:
+  slug: cat-laser
+  name: Cat Laser
+
+esphome:
+  name: ${slug}
+  friendly_name: ${name}
+
+esp32:
+  board: wemos_d1_mini32
+  framework:
+    type: esp-idf
+
+# esp8266:
+#   board: d1_mini
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+  services:
+    - service: servo_y
+      variables:
+        level: float
+      then:
+        - servo.write:
+            id: servo_y
+            level: !lambda "return level / 100.0;"
+    - service: servo_x
+      variables:
+        level: float
+      then:
+        - servo.write:
+            id: servo_x
+            level: !lambda "return level / 100.0;"
+
+output:
+  - platform: ledc
+    id: pwm_1
+    pin: D5
+    frequency: 50 Hz
+  - platform: ledc
+    id: pwm_2
+    pin: D6
+    frequency: 50 Hz
+
+servo:
+  - id: servo_y
+    output: pwm_1
+    transition_length: "2s"
+    auto_detach_time: 1s
+  - id: servo_x
+    output: pwm_2
+    transition_length: "2s"
+    auto_detach_time: 1s
+
+# Example configuration entry
+switch:
+  - platform: gpio
+    pin: D7
+    name: "Laser Pointer"
+    restore_mode: ALWAYS_OFF

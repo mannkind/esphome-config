@@ -40,8 +40,9 @@ switch:
     id: relay
     icon: mdi:toggle-switch
     pin: GPIO12
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: RESTORE_DEFAULT_ON
 
 button:
   - platform: restart
     name: ${name} Restart
+    entity_category: diagnostic

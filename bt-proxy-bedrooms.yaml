@@ -1,0 +1,6 @@
+<<: !include templates/global.yaml
+<<: !include templates/bt-proxy.yaml
+
+substitutions:
+  slug: bt-proxy-bedrooms
+  name: Bluetooth Proxy Bedrooms

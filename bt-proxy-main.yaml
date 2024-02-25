@@ -1,0 +1,6 @@
+<<: !include templates/global.yaml
+<<: !include templates/bt-proxy.yaml
+
+substitutions:
+  slug: bt-proxy-main
+  name: Bluetooth Proxy Main

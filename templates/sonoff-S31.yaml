@@ -57,6 +57,8 @@ switch:
 
   - platform: restart
     name: ${name} Restart
+    entity_category: diagnostic
+
 
 status_led:
   pin: GPIO13

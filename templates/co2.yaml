@@ -26,3 +26,4 @@ binary_sensor:
 button:
   - platform: restart
     name: ${name} Restart
+    entity_category: diagnostic

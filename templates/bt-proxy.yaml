@@ -1,0 +1,28 @@
+esphome:
+  name: ${slug}
+
+esp32:
+  board: wemos_d1_mini32
+  framework:
+    type: esp-idf
+
+improv_serial:
+
+esp32_ble_tracker:
+  scan_parameters:
+    # We currently use the defaults to ensure Bluetooth
+    # can co-exist with WiFi In the future we may be able to
+    # enable the built-in coexistence logic in ESP-IDF
+    active: true
+
+bluetooth_proxy:
+  active: true
+
+button:
+  - platform: safe_mode
+    name: Safe Mode Boot
+    entity_category: diagnostic
+
+  - platform: restart
+    name: ${name} Restart
+    entity_category: diagnostic
