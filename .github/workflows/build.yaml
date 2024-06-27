@@ -29,7 +29,7 @@ jobs:
     outputs:
       esphome-version: ${{ steps.esphome-build.outputs.esphome-version }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Decrypt Secrets
         env:
           SECRET_YAML: ${{ secrets.SECRET_YAML }}
@@ -43,7 +43,7 @@ jobs:
       - run: |
           mkdir output
           mv "${{ steps.esphome-build.outputs.name }}" output/
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: esphome
           path: output
