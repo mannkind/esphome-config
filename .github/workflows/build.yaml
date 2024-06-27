@@ -45,5 +45,5 @@ jobs:
           mv "${{ steps.esphome-build.outputs.name }}" output/
       - uses: actions/upload-artifact@v4
         with:
-          name: esphome
+          name: esphome-${{ steps.esphome-build.outputs.name }}
           path: output
