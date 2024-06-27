@@ -10,3 +10,4 @@ logger:
   level: info
 
 ota:
+  - platform: esphome
