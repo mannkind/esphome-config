@@ -39,32 +39,53 @@ output:
 
 button:
   - platform: output
+    id: up_btn
     name: ${name} Up
     output: up
     duration: 500ms
+    internal: true
   
   - platform: output
+    id: down_btn
     name: ${name} Down
     output: down
     duration: 500ms
+    internal: true
   
   - platform: output
+    id: stop_btn
     name: ${name} Stop
     output: stop
     duration: 500ms
+    internal: true
 
   - platform: output
     name: ${name} Channel Down
     output: ch_down
     duration: 500ms
+    internal: true
 
   - platform: output
     name: ${name} Channel Up
     output: ch_up
     duration: 500ms
+    internal: true
 
   - platform: restart
     name: ${name} Restart
+
+cover:
+  - platform: template
+    name: ${name}
+    device_class: shade
+    optimistic: true
+    assumed_state: true
+    open_action:
+      - button.press: up_btn
+    close_action:
+      - button.press: down_btn
+    stop_action:
+      - button.press: stop_btn
 
 binary_sensor:
   - platform: status
