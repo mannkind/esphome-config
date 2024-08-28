@@ -1,5 +1,6 @@
-<<: !include templates/global.yaml
-<<: !include templates/sonoff-S20-temp.yaml
+packages:
+  global: !include packages/global.yaml
+  s20: !include packages/sonoff-S20-temp.yaml
 
 substitutions:
   slug: outlet-002

@@ -1,5 +1,11 @@
-<<: !include templates/global.yaml
-<<: !include templates/bt-proxy.yaml
+packages:
+  global: !include packages/global.yaml
+  esp32: !include packages/esp32-d1_mini32.yaml
+  bt-proxy: !include packages/bt-proxy.yaml
+
+esp32:
+  framework:
+    type: esp-idf
 
 substitutions:
   slug: bt-proxy-bedrooms

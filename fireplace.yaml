@@ -1,27 +1,15 @@
-<<: !include templates/global.yaml
+packages:
+  global: !include packages/global.yaml
+  esp8266: !include packages/esp8266-d1_mini.yaml
 
 substitutions:
   slug: fireplace
   name: Fireplace
 
-esphome:
-  name: ${slug}
-
-esp8266:
-  board: d1_mini
-
-binary_sensor:   
-  - platform: status
-    name: ${name} Status
-
 switch:
   - platform: gpio
-    name: ${name}
+    name: Switch
     icon: mdi:fire
     pin:
       number: D2
       inverted: True
-
-button:
-  - platform: restart
-    name: ${name} Restart

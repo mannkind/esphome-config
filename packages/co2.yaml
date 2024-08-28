@@ -1,0 +1,14 @@
+uart:
+  rx_pin: GPIO3
+  tx_pin: GPIO1
+  baud_rate: 9600
+
+logger:
+  baud_rate: 0
+  level: info
+
+sensor:
+  - platform: senseair
+    co2:
+      name: CO2
+    update_interval: 60s

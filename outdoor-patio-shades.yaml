@@ -1,14 +1,10 @@
-<<: !include templates/global.yaml
+packages:
+  global: !include packages/global.yaml
+  esp32: !include packages/esp32-d1_mini32.yaml
 
 substitutions:
   slug: outdoor-patio-shades
   name: Outdoor Patio Shades
-
-esphome:
-  name: ${slug}
-
-esp32:
-  board: wemos_d1_mini32
 
 # Individual sensors
 output:
@@ -40,43 +36,40 @@ output:
 button:
   - platform: output
     id: up_btn
-    name: ${name} Up
+    name: Up
     output: up
     duration: 500ms
     internal: true
   
   - platform: output
     id: down_btn
-    name: ${name} Down
+    name: Down
     output: down
     duration: 500ms
     internal: true
   
   - platform: output
     id: stop_btn
-    name: ${name} Stop
+    name: Stop
     output: stop
     duration: 500ms
     internal: true
 
   - platform: output
-    name: ${name} Channel Down
+    name: Channel Down
     output: ch_down
     duration: 500ms
     internal: true
 
   - platform: output
-    name: ${name} Channel Up
+    name: Channel Up
     output: ch_up
     duration: 500ms
     internal: true
 
-  - platform: restart
-    name: ${name} Restart
-
 cover:
   - platform: template
-    name: ${name}
+    name: Shades
     device_class: shade
     optimistic: true
     assumed_state: true
@@ -86,7 +79,3 @@ cover:
       - button.press: down_btn
     stop_action:
       - button.press: stop_btn
-
-binary_sensor:
-  - platform: status
-    name: ${name} Status

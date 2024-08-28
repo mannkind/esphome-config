@@ -1,0 +1,36 @@
+esphome:
+  name: ${slug}
+  friendly_name: ${name}
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+logger:
+  level: info
+
+ota:
+  - platform: esphome
+
+sensor:
+  - platform: uptime
+    name: Uptime
+    update_interval: 67s
+    entity_category: diagnostic
+
+binary_sensor:   
+  - platform: status
+    name: Status
+
+button:
+  - platform: safe_mode
+    name: Safe Mode Boot
+    entity_category: diagnostic
+
+  - platform: restart
+    name: Restart
+    entity_category: diagnostic

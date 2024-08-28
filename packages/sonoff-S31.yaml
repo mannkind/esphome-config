@@ -4,25 +4,24 @@ uart:
 
 sensor:
   - platform: total_daily_energy
-    name: ${name} Energy
+    name: Energy
     power_id: power
 
   - platform: cse7766
-    update_interval: 15s
     current:
-      name: ${name} Current
+      name: Current
       filters:
         - sliding_window_moving_average:
             window_size: 4
             send_every: 4
     voltage:
-      name: ${name} Voltage
+      name: Voltage
       filters:
         - sliding_window_moving_average:
             window_size: 4
             send_every: 4
     power:
-      name: ${name} Power
+      name: Power
       id: power
       unit_of_measurement: kW
       accuracy_decimals: 3
@@ -43,22 +42,14 @@ binary_sensor:
     on_press:
       then:
         - switch.toggle: relay
-  
-  - platform: status
-    name: ${name} Status
 
 switch:
   - platform: gpio
-    name: ${name}
+    name: Switch
     id: relay
     icon: mdi:toggle-switch
     pin: GPIO12
     restore_mode: RESTORE_DEFAULT_ON
-
-  - platform: restart
-    name: ${name} Restart
-    entity_category: diagnostic
-
 
 status_led:
   pin: GPIO13

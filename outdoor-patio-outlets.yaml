@@ -1,14 +1,12 @@
-<<: !include templates/global.yaml
+packages:
+  global: !include packages/global.yaml
+
+esp32:
+  board: esp-wrover-kit
 
 substitutions:
   slug: outdoor-patio-outlet
   name: Outdoor Patio Outlet
-
-esphome:
-  name: ${slug}
-
-esp32:
-  board: esp-wrover-kit
 
 switch:
   - platform: gpio
@@ -34,10 +32,6 @@ switch:
       - light.turn_on: relay2_led
     on_turn_off:
       - light.turn_off: relay2_led
-
-button:
-  - platform: restart
-    name: ${name} Restart
 
 output:
   - platform: gpio
@@ -65,12 +59,12 @@ light:
 
 sensor:
   - platform: total_daily_energy
-    name: ${name} Energy
+    name: Energy
     power_id: power
 
   - platform: adc
     pin: GPIO34
-    name: ${name} LUX
+    name: LUX
     update_interval: 10s
     attenuation: 11db
 
@@ -85,15 +79,15 @@ sensor:
     change_mode_every: 3
     update_interval: 3s    
     current:
-      name: ${name} Amps
+      name: Amps
       unit_of_measurement: A
       accuracy_decimals: 2
     voltage:
-      name: ${name} Volts
+      name: Volts
       unit_of_measurement: V
       accuracy_decimals: 1
     power:
-      name: ${name} Watts
+      name: Watts
       id: power
       unit_of_measurement: kW
       accuracy_decimals: 0    
@@ -127,7 +121,7 @@ binary_sensor:
 status_led:
   pin:
     number: GPIO5
-    inverted: true  
+    inverted: true
 
 time:
   - platform: sntp

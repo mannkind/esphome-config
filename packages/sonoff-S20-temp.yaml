@@ -13,7 +13,7 @@ one_wire:
 # Individual sensors
 sensor:
   - platform: dallas_temp
-    name: ${name} Temperature
+    name: Temperature
     address: ${dallas_address}
     filters:
       - lambda: return (x * (9.0/5.0) + 32.0) - 4.0; # C to F, - adjustment
@@ -30,19 +30,11 @@ binary_sensor:
     on_press:
       then:
         - switch.toggle: relay
-  
-  - platform: status
-    name: ${name} Status
 
 switch:
   - platform: gpio
-    name: ${name} Switch
+    name: Switch
     id: relay
     icon: mdi:toggle-switch
     pin: GPIO12
     restore_mode: RESTORE_DEFAULT_ON
-
-button:
-  - platform: restart
-    name: ${name} Restart
-    entity_category: diagnostic
