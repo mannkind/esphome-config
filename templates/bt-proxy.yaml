@@ -6,8 +6,6 @@ esp32:
   framework:
     type: esp-idf
 
-improv_serial:
-
 esp32_ble_tracker:
   scan_parameters:
     # We currently use the defaults to ensure Bluetooth

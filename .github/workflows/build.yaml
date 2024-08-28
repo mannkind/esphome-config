@@ -14,6 +14,9 @@ jobs:
       matrix:
         file:
           - bed.yaml
+          - bt-proxy-main.yaml
+          - bt-proxy-bedrooms.yaml
+          - bt-proxy-office.yaml
           - co2-bedrooms.yaml
           - co2-main.yaml
           - co2-office.yaml
