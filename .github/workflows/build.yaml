@@ -37,7 +37,7 @@ jobs:
         env:
           SECRET_YAML: ${{ secrets.SECRET_YAML }}
         run: |
-          echo "$SECRET_YAML" > templates/secrets.yaml
+          echo "$SECRET_YAML" > secrets.yaml
       - uses: esphome/build-action@v3
         id: esphome-build
         with:
