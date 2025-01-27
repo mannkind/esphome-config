@@ -43,11 +43,11 @@ output:
 servo:
   - id: servo_y
     output: pwm_1
-    transition_length: "2s"
+    transition_length: 1s
     auto_detach_time: 1s
   - id: servo_x
     output: pwm_2
-    transition_length: "2s"
+    transition_length: 1s
     auto_detach_time: 1s
 
 # Example configuration entry

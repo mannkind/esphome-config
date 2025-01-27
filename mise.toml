@@ -1,0 +1,116 @@
+[tasks.venv]
+run = 'echo source venv/bin/activate'
+
+[tasks.build-bed]
+run = 'esphome compile bed.yaml'
+
+[tasks.build-bt-proxy-bedrooms]
+run = 'esphome compile bt-proxy-bedrooms.yaml'
+
+[tasks.build-bt-proxy-main]
+run = 'esphome compile bt-proxy-main.yaml'
+
+[tasks.build-bt-proxy-office]
+run = 'esphome compile bt-proxy-office.yaml'
+
+[tasks.build-co2-bedrooms]
+run = 'esphome compile co2-bedrooms.yaml'
+
+[tasks.build-co2-main]
+run = 'esphome compile co2-main.yaml'
+
+[tasks.build-co2-office]
+run = 'esphome compile co2-office.yaml'
+
+[tasks.build-fireplace]
+run = 'esphome compile fireplace.yaml'
+
+[tasks.build-garage]
+run = 'esphome compile garage.yaml'
+
+[tasks.build-laser-toy]
+run = 'esphome compile laser-toy.yaml'
+
+[tasks.build-outdoor-patio-outlets]
+run = 'esphome compile outdoor-patio-outlets.yaml'
+
+[tasks.build-outdoor-patio-shades]
+run = 'esphome compile outdoor-patio-shades.yaml'
+
+[tasks.build-pet-outlet]
+run = 'esphome compile pet-outlet.yaml'
+
+[tasks.build-outlet-002]
+run = 'esphome compile outlet-002.yaml'
+
+[tasks.build-outlet-003]
+run = 'esphome compile outlet-003.yaml'
+
+[tasks.build-outlet-energy-001]
+run = 'esphome compile outlet-energy-001.yaml'
+
+[tasks.build-treat-dispenser]
+run = 'esphome build treat-dispenser.yaml'
+
+[tasks.upload-bed]
+run = 'esphome upload bed.yaml --device bed'
+
+[tasks.upload-bt-proxy-bedrooms]
+run = 'esphome upload bt-proxy-bedrooms.yaml --device bt-proxy-bedrooms'
+
+[tasks.upload-bt-proxy-main]
+run = 'esphome upload bt-proxy-main.yaml --device bt-proxy-main'
+
+[tasks.upload-bt-proxy-office]
+run = 'esphome upload bt-proxy-office.yaml --device bt-proxy-office'
+
+[tasks.upload-co2-bedrooms]
+run = 'esphome upload co2-bedrooms.yaml --device co2-bedrooms'
+
+[tasks.upload-co2-main]
+run = 'esphome upload co2-main.yaml --device co2-main'
+
+[tasks.upload-co2-office]
+run = 'esphome upload co2-office.yaml --device co2-office'
+
+[tasks.upload-fireplace]
+run = 'esphome upload fireplace.yaml --device fireplace'
+
+[tasks.upload-garage]
+run = 'esphome upload garage.yaml --device garage'
+
+[tasks.upload-laser-toy]
+run = 'esphome upload laser-toy.yaml --device cat-laser'
+
+[tasks.upload-outdoor-patio-outlets]
+run = 'esphome upload outdoor-patio-outlets.yaml --device outdoor-patio-outlet'
+
+[tasks.upload-outdoor-patio-shades]
+run = 'esphome upload outdoor-patio-shades.yaml --device outdoor-patio-shades'
+
+[tasks.upload-pet-outlet]
+run = 'esphome upload pet-outlet.yaml --device pet-outlet'
+
+[tasks.upload-outlet-002]
+run = 'esphome upload outlet-002.yaml --device outlet-002'
+
+[tasks.upload-outlet-003]
+run = 'esphome upload outlet-003.yaml --device outlet-003'
+
+[tasks.upload-outlet-energy-001]
+run = 'esphome upload outlet-energy-001.yaml --device outlet_energy_001'
+
+[tasks.upload-treat-dispenser]
+run = 'esphome upload treat-dispenser.yaml --device treat-dispenser'
+
+[tasks.build-all]
+depends = ['build-bed','build-bt-proxy-bedrooms','build-bt-proxy-main','build-bt-proxy-office','build-co2-bedrooms','build-co2-main','build-co2-office','build-fireplace','build-garage','build-laser-toy','build-outdoor-patio-outlets','build-outdoor-patio-shades','build-pet-outlet','build-outlet-002','build-outlet-003','build-outlet-energy-001']
+
+[tasks.upload-all]
+depends = ['upload-bed','upload-bt-proxy-bedrooms','upload-bt-proxy-main','upload-bt-proxy-office','upload-co2-bedrooms','upload-co2-main','upload-co2-office','upload-fireplace','upload-garage','upload-laser-toy','upload-outdoor-patio-outlets','upload-outdoor-patio-shades','upload-pet-outlet','upload-outlet-002','upload-outlet-003','upload-outlet-energy-001']
+
+[tasks.upload]
+run = 'esphome upload'
+
+[tasks.run]
+run = 'esphome run'
