@@ -38,7 +38,7 @@ jobs:
           SECRET_YAML: ${{ secrets.SECRET_YAML }}
         run: |
           echo "$SECRET_YAML" > secrets.yaml
-      - uses: esphome/build-action@v3
+      - uses: esphome/build-action@v6
         id: esphome-build
         with:
           yaml_file: ${{ matrix.file }}
