@@ -9,6 +9,7 @@ substitutions:
 servo:
   - id: treat_servo
     output: treat_servo_output
+    auto_detach_time: 0.20s
 
 output:
   - platform: esp8266_pwm
@@ -23,6 +24,4 @@ button:
     on_press:
       - servo.write:
           id: treat_servo
-          level: -1
-      - delay: 0.162s
-      - servo.detach: treat_servo
+          level: 1

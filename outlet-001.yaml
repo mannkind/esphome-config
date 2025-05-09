@@ -3,6 +3,6 @@ packages:
   s20: !include packages/sonoff-S20-temp.yaml
 
 substitutions:
-  slug: pet-outlet
-  name: Pet Outlet
+  slug: outlet-001
+  name: Outlet 001
   dallas_address: "0x91041752F68AFF28"

@@ -50,7 +50,7 @@ run = 'esphome compile outlet-003.yaml'
 run = 'esphome compile outlet-energy-001.yaml'
 
 [tasks.build-treat-dispenser]
-run = 'esphome build treat-dispenser.yaml'
+run = 'esphome compile treat-dispenser.yaml'
 
 [tasks.upload-bed]
 run = 'esphome upload bed.yaml --device bed'
@@ -104,10 +104,46 @@ run = 'esphome upload outlet-energy-001.yaml --device outlet_energy_001'
 run = 'esphome upload treat-dispenser.yaml --device treat-dispenser'
 
 [tasks.build-all]
-depends = ['build-bed','build-bt-proxy-bedrooms','build-bt-proxy-main','build-bt-proxy-office','build-co2-bedrooms','build-co2-main','build-co2-office','build-fireplace','build-garage','build-laser-toy','build-outdoor-patio-outlets','build-outdoor-patio-shades','build-pet-outlet','build-outlet-002','build-outlet-003','build-outlet-energy-001']
+run = """
+    mise run build-bed
+    mise run build-bt-proxy-bedrooms
+    mise run build-bt-proxy-main
+    mise run build-bt-proxy-office
+    mise run build-co2-bedrooms
+    mise run build-co2-main
+    mise run build-co2-office
+    mise run build-fireplace
+    mise run build-garage
+    mise run build-laser-toy
+    mise run build-outdoor-patio-outlets
+    mise run build-outdoor-patio-shades
+    mise run build-outlet-002
+    mise run build-outlet-003
+    mise run build-outlet-energy-001
+    mise run build-pet-outlet
+    mise run build-treat-dispenser
+"""
 
 [tasks.upload-all]
-depends = ['upload-bed','upload-bt-proxy-bedrooms','upload-bt-proxy-main','upload-bt-proxy-office','upload-co2-bedrooms','upload-co2-main','upload-co2-office','upload-fireplace','upload-garage','upload-laser-toy','upload-outdoor-patio-outlets','upload-outdoor-patio-shades','upload-pet-outlet','upload-outlet-002','upload-outlet-003','upload-outlet-energy-001']
+run = """
+    mise run upload-bed
+    mise run upload-bt-proxy-bedrooms
+    mise run uplord-bt-proxy-main
+    mise run uplord-bt-proxy-office
+    mise run uplord-co2-bedrooms
+    mise run uplord-co2-main
+    mise run uplord-co2-office
+    mise run uplord-fireplace
+    mise run uplord-garage
+    mise run uplord-laser-toy
+    mise run uplord-outdoor-patio-outlets
+    mise run uplord-outdoor-patio-shades
+    mise run uplord-outlet-002
+    mise run uplord-outlet-003
+    mise run uplord-outlet-energy-001
+    mise run uplord-pet-outlet
+    mise run uplord-treat-dispenser
+"""
 
 [tasks.upload]
 run = 'esphome upload'
