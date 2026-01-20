@@ -1,0 +1,15 @@
+binary_sensor:
+  # Wheel rotation detection sensor
+  - platform: gpio
+    pin:
+      number: GPIO18
+      mode: INPUT_PULLUP
+    name: "Wheel - Rotation Sensor"
+    internal: true
+    entity_category: diagnostic
+    icon: "mdi:rotate-orbit"
+    filters:
+      - delayed_on: ${sensor_debounce_ms}ms
+      - delayed_off: ${sensor_debounce_ms}ms
+    on_press:
+      - script.execute: wheel_rotation_action

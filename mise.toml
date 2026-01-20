@@ -1,0 +1,9 @@
+[tasks.'esphome:venv']
+description = "Run as $(mr esphome:venv)"
+run = 'echo source .venv/bin/activate'
+
+[tasks.'esphome:dashboard']
+run = 'esphome dashboard .'
+
+[tasks.'esphome:update']
+run = 'uv pip install -U esphome'

@@ -1,0 +1,48 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/wifi.yaml
+  esp8266: !include packages/esp8266-d1_mini.yaml
+
+substitutions:
+  slug: garage
+  name: Garage
+
+binary_sensor:
+  - platform: homeassistant
+    id: closed
+    internal: true
+    entity_id: binary_sensor.0x00158d00044fb182_contact
+
+switch:
+  - platform: gpio
+    id: open_close_btn
+    internal: true
+    pin:
+      number: GPIO5
+      inverted: True
+
+button:
+  - platform: template
+    id: garage_door_btn
+    internal: true
+    on_press:
+      - switch.turn_on: open_close_btn
+      - delay: '0.25s'
+      - switch.turn_off: open_close_btn
+
+cover:
+  - platform: template
+    name: Door
+    lambda: >-
+      const auto s = id(closed);
+      if (s->state == 0) {
+        return cover::COVER_CLOSED;
+      } else {
+        return cover::COVER_OPEN;
+      }
+    open_action:
+      - button.press: garage_door_btn
+    close_action:
+      - button.press: garage_door_btn
+    stop_action:
+      - button.press: garage_door_btn

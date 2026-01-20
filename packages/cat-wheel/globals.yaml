@@ -1,0 +1,192 @@
+globals:
+  # ================================================================
+  # STATE MACHINE VARIABLES
+  # ================================================================
+
+  # System state machine: 0=IDLE, 1=DISPENSING
+  # Type: int
+  # Range: 0-1
+  # Persistence: NO (session-based, resets to IDLE on boot)
+  # Used in: All state transition scripts and logic checks
+  - id: system_state
+    type: int
+    restore_value: no
+    initial_value: "0"  # IDLE
+
+  # Timestamp when treat dispensing started (milliseconds since boot)
+  # Type: unsigned long
+  # Range: 0 to ULONG_MAX (~49.7 days)
+  # Persistence: NO (cleared on boot)
+  # Used in: dispense_complete_check to detect when stepper finishes
+  - id: dispense_start_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  # ================================================================
+  # SESSION PROGRESS TRACKING
+  # ================================================================
+
+  # Number of magnets detected since last treat dispense
+  # Type: int
+  # Range: 0 to (distance_threshold ÷ hall_effect_run_distance_multiplier)
+  # Persistence: YES (survives reboots) - cat resumes partial progress
+  # Used in: wheel_rotation_action to calculate current_distance
+  - id: magnet_detected_count
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+  # Progressive training interval multiplier (increments after each treat)
+  # Type: int
+  # Range: 1 to infinity (resets to 1 on session reset)
+  # Persistence: YES (survives reboots) - cat resumes training interval
+  # Formula: required_distance = distance_threshold × treat_interval_multiplier
+  - id: treat_interval_multiplier
+    type: int
+    restore_value: yes
+    initial_value: "1"
+
+  # ================================================================
+  # ACTIVITY MONITORING
+  # ================================================================
+
+  # Last time any activity occurred (wheel rotation or treat dispense)
+  # Type: unsigned long (milliseconds since boot)
+  # Persistence: NO (cleared on boot)
+  # Used in: inactivity_check to reset training after idle period
+  - id: last_activity_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  # Last time wheel rotation was detected
+  # Type: unsigned long (milliseconds since boot)
+  # Persistence: NO (cleared on boot)
+  # Used in: Sensor updates for "seconds since last rotation" metric
+  - id: last_wheel_rotation_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  # ================================================================
+  # QUIET HOURS STATE
+  # ================================================================
+
+  # Current quiet hours status (true = quiet, no treats dispensed)
+  # Type: bool
+  # Persistence: NO (recalculated on boot from SNTP time)
+  - id: is_quiet_hour
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+  # ================================================================
+  # HARDWARE CALIBRATION
+  # ================================================================
+
+  # Distance traveled per wheel rotation (per magnet detection)
+  # Type: int (centimeters)
+  # Range: 10-50 cm (configurable via Home Assistant)
+  # Persistence: YES (survives reboots)
+  # Default: 22cm (calculated from 383cm wheel circumference ÷ 17 magnets)
+  - id: hall_effect_run_distance_multiplier
+    type: int
+    restore_value: yes
+    initial_value: "22"
+
+  # ================================================================
+  # TRAINING THRESHOLDS
+  # ================================================================
+
+  # Base distance required for first treat (subsequent treats scale by multiplier)
+  # Type: int (centimeters)
+  # Range: 50-5000 cm (configurable via Home Assistant)
+  # Persistence: YES (survives reboots)
+  # Default: 500cm (5 meters for first treat)
+  - id: distance_threshold
+    type: int
+    restore_value: yes
+    initial_value: "500"
+
+  # Growth factor for treat interval multiplier (applied after each treat)
+  # Type: float
+  # Range: 1.0-3.0 (configurable via Home Assistant)
+  # Persistence: YES (survives reboots)
+  # Default: 1.5 (multiplier grows by 1.5x each treat)
+  - id: treat_interval_growth_factor
+    type: float
+    restore_value: yes
+    initial_value: "1.5"
+
+  # ================================================================
+  # TIMING CONFIGURATION
+  # ================================================================
+
+  # Time of inactivity before training progress resets
+  # Type: unsigned long (milliseconds)
+  # Range: 60000-1800000 ms (1-30 minutes, configurable via Home Assistant)
+  # Persistence: YES (survives reboots)
+  # Default: 300000ms (5 minutes)
+  - id: inactivity_reset_time
+    type: unsigned long
+    restore_value: yes
+    initial_value: "300000"
+
+  # ================================================================
+  # STEPPER CONFIGURATION
+  # ================================================================
+
+  # Number of steps per treat dispense (NEMA17 + A3967 1/8 microstepping: 1600 steps/rev)
+  # Type: int (steps)
+  # Range: 10-3200 (configurable via Home Assistant)
+  # Persistence: YES (survives reboots)
+  # Default: 400 (~quarter revolution)
+  - id: stepper_steps_per_dispense
+    type: int
+    restore_value: yes
+    initial_value: "400"
+
+  # ================================================================
+  # QUIET HOURS CONFIGURATION
+  # ================================================================
+
+  - id: quiet_hours_start_hour
+    type: int
+    restore_value: yes
+    initial_value: "22"
+
+  - id: quiet_hours_start_minute
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+  - id: quiet_hours_end_hour
+    type: int
+    restore_value: yes
+    initial_value: "7"
+
+  - id: quiet_hours_end_minute
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+  # ================================================================
+  # CUMULATIVE TRACKING (LIFETIME TOTALS)
+  # ================================================================
+
+  # Total distance traveled by cat on wheel (all-time)
+  # Type: int (centimeters)
+  # Persistence: YES (survives reboots)
+  - id: total_distance
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+  # Total number of treats dispensed (all-time)
+  # Type: int (count)
+  # Persistence: YES (survives reboots)
+  - id: total_treats_dispensed
+    type: int
+    restore_value: yes
+    initial_value: "0"

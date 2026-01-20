@@ -1,0 +1,279 @@
+time:
+  - platform: sntp
+    id: sntp_time
+    servers:
+      - 10.0.1.10
+    on_time_sync:
+      - logger.log:
+          format: "Time synchronized: %s"
+          args: ['id(sntp_time).now().strftime("%Y-%m-%d %H:%M:%S").c_str()']
+          level: INFO
+      - lambda: |-
+          id(quiet_hours_start_time)
+              ->make_call()
+              .set_time(id(quiet_hours_start_hour), id(quiet_hours_start_minute), 0)
+              .perform();
+
+          id(quiet_hours_end_time)
+              ->make_call()
+              .set_time(id(quiet_hours_end_hour), id(quiet_hours_end_minute), 0)
+              .perform();
+      - script.execute: update_quiet_hours_status
+
+interval:
+  # Check for inactivity and reset training progress
+  - interval: 15s
+    then:
+      - script.execute: inactivity_check
+
+  # Check if stepper has finished dispensing
+  - interval: 1s
+    then:
+      - script.execute: dispense_complete_check
+
+  # Update quiet hours status
+  - interval: 60s
+    then:
+      - script.execute: update_quiet_hours_status
+
+script:
+  # ================================================================
+  # STATE MANAGEMENT HELPERS
+  # ================================================================
+  # State transitions: IDLE (0) <-> DISPENSING (1)
+
+  - id: set_state_idle
+    then:
+      - lambda: |-
+          auto old_state = id(system_state);
+          const char* old_state_name = (old_state == 0) ? "IDLE" : "DISPENSING";
+
+          ESP_LOGI("[STATE]", "Transition: %s -> IDLE", old_state_name);
+          ESP_LOGI("[STATE]", "  Current interval: %d, magnets since last treat: %d",
+                   id(treat_interval_multiplier), id(magnet_detected_count));
+
+          id(system_state) = 0;  // IDLE
+          id(dispense_start_time) = 0;
+
+  - id: set_state_dispensing
+    then:
+      - lambda: |-
+          auto old_state = id(system_state);
+          const char* old_state_name = (old_state == 0) ? "IDLE" : "DISPENSING";
+
+          ESP_LOGI("[STATE]", "Transition: %s -> DISPENSING", old_state_name);
+          ESP_LOGI("[STATE]", "  Stepper: rotating %d steps", id(stepper_steps_per_dispense));
+
+          id(system_state) = 1;  // DISPENSING
+          id(dispense_start_time) = millis();
+
+          // Command stepper to advance by configured steps
+          auto current_pos = id(treat_stepper).current_position;
+          id(treat_stepper).set_target(current_pos + id(stepper_steps_per_dispense));
+
+  # ================================================================
+  # MAIN LOGIC SCRIPTS
+  # ================================================================
+  #
+  # TREAT CALCULATION FORMULA:
+  # --------------------------
+  #   current_distance = magnet_detected_count × hall_effect_run_distance_multiplier
+  #   required_distance = distance_threshold × treat_interval_multiplier
+  #
+  # DISPENSE CONDITION: current_distance >= required_distance
+  #
+  # MULTIPLIER BEHAVIOR:
+  # - Starts at 1 on boot or after reset
+  # - Grows by treat_interval_growth_factor after each treat (default 1.5x)
+  # - Always increases by at least 1 to prevent stalling
+  # - Resets to 1 after inactivity timeout (default 5 minutes)
+  # ================================================================
+
+  - id: wheel_rotation_action
+    then:
+      - lambda: |-
+          ESP_LOGD("[WHEEL]", "Rotation detected");
+          id(magnet_detected_count) += 1;
+          id(total_distance) += id(hall_effect_run_distance_multiplier);
+          id(last_activity_time) = millis();
+          id(last_wheel_rotation_time) = millis();
+
+          // Skip treat logic while dispensing
+          if (id(system_state) == 1) {
+            return;
+          }
+
+          // Calculate distances using progressive training formula
+          auto current_distance = id(magnet_detected_count) * id(hall_effect_run_distance_multiplier);
+          auto required_distance = id(distance_threshold) * id(treat_interval_multiplier);
+
+          ESP_LOGD("[WHEEL]", "Progress: %d/%d cm (total: %d cm)",
+                    current_distance, required_distance, id(total_distance));
+
+          if (current_distance < required_distance) {
+            return;
+          }
+
+          // Check if we're in quiet hours
+          if (id(is_quiet_hour)) {
+            ESP_LOGI("[QUIET]", "Treat earned but not dispensed due to quiet hours");
+            ESP_LOGI("[QUIET]", "  Progress: %d/%d cm (extra distance will be discarded on dispense)",
+                     current_distance, required_distance);
+            return;
+          }
+
+          // ================================================================
+          // TREAT EARNED - DISPENSE SEQUENCE
+          // ================================================================
+          ESP_LOGI("[TREAT]", "Treat earned! Current interval: %d, distance: %d cm",
+                   id(treat_interval_multiplier),
+                   id(magnet_detected_count) * id(hall_effect_run_distance_multiplier));
+
+          // Update sensors showing "before dispense" state
+          id(total_distance_sensor).update();
+          id(distance_since_treat_sensor).update();
+          id(last_activity_time_sensor).update();
+
+          // Reset magnet count and grow multiplier
+          id(magnet_detected_count) = 0;
+
+          int new_multiplier = (int)(id(treat_interval_multiplier) * id(treat_interval_growth_factor));
+          if (new_multiplier <= id(treat_interval_multiplier)) {
+            new_multiplier = id(treat_interval_multiplier) + 1;
+          }
+          id(treat_interval_multiplier) = new_multiplier;
+
+          ESP_LOGI("[TREAT]", "Next interval: %d (growth factor: %.1f), required distance: %d cm",
+                   id(treat_interval_multiplier), id(treat_interval_growth_factor),
+                   id(distance_threshold) * id(treat_interval_multiplier));
+
+          // Trigger stepper rotation
+          id(set_state_dispensing).execute();
+
+          // Update sensors showing "after dispense" state
+          id(distance_since_treat_sensor).update();
+          id(next_treat_distance_sensor).update();
+
+  # Reset scripts
+  - id: reset_training_progress
+    then:
+      - lambda: |-
+          ESP_LOGI("[RESET]", "Manual training progress reset requested");
+          ESP_LOGI("[RESET]", "Previous values - Distance: %d cm, Treats: %d",
+                   id(total_distance), id(total_treats_dispensed));
+
+          id(total_distance) = 0;
+          id(total_treats_dispensed) = 0;
+
+          id(reset_system_state).execute();
+
+  - id: reset_system_state
+    then:
+      - lambda: |-
+          ESP_LOGI("[RESET]", "System state reset requested");
+          ESP_LOGI("[RESET]", "Previous state values - State: %d, Interval: %d, Magnet count: %d",
+                   id(system_state), id(treat_interval_multiplier), id(magnet_detected_count));
+
+          id(treat_interval_multiplier) = 1;
+          id(magnet_detected_count) = 0;
+          id(last_activity_time) = 0;
+          id(last_wheel_rotation_time) = 0;
+
+          ESP_LOGI("[RESET]", "System state reset complete");
+          id(set_state_idle).execute();
+
+          // Force sensor updates to reflect reset values
+          id(distance_since_treat_sensor).update();
+          id(next_treat_distance_sensor).update();
+
+  # ================================================================
+  # INTERVAL SCRIPTS
+  # ================================================================
+
+  - id: inactivity_check
+    then:
+      - lambda: |-
+          if (id(last_activity_time) == 0) {
+            return;
+          }
+
+          unsigned long current_time = millis();
+          if (current_time < id(last_activity_time)) {
+            ESP_LOGW("[INACTIVITY]", "millis() wraparound detected, resetting activity time");
+            id(last_activity_time) = current_time;
+            return;
+          }
+
+          unsigned long elapsed = current_time - id(last_activity_time);
+          if (elapsed <= id(inactivity_reset_time)) {
+            return;
+          }
+
+          ESP_LOGI("[INACTIVITY]", "Resetting due to inactivity (elapsed: %lu ms, threshold: %lu ms)",
+                   elapsed, id(inactivity_reset_time));
+          ESP_LOGI("[INACTIVITY]", "  Previous: interval=%d, magnets=%d",
+                   id(treat_interval_multiplier), id(magnet_detected_count));
+
+          id(treat_interval_multiplier) = 1;
+          id(magnet_detected_count) = 0;
+          id(last_wheel_rotation_time) = 0;
+          id(last_activity_time) = 0;
+
+          id(set_state_idle).execute();
+
+  - id: update_quiet_hours_status
+    then:
+      - lambda: |-
+          auto time = id(sntp_time).now();
+          if (!time.is_valid()) {
+            id(is_quiet_hour) = false;
+            return;
+          }
+
+          auto current_hour = time.hour;
+          auto current_minute = time.minute;
+          auto current_minutes_total = current_hour * 60 + current_minute;
+
+          auto start_hour = id(quiet_hours_start_hour);
+          auto start_minute = id(quiet_hours_start_minute);
+          auto start_minutes_total = start_hour * 60 + start_minute;
+
+          auto end_hour = id(quiet_hours_end_hour);
+          auto end_minute = id(quiet_hours_end_minute);
+          auto end_minutes_total = end_hour * 60 + end_minute;
+
+          auto was_quiet = id(is_quiet_hour);
+
+          if (start_minutes_total <= end_minutes_total) {
+            id(is_quiet_hour) = (current_minutes_total >= start_minutes_total && current_minutes_total <= end_minutes_total);
+          } else {
+            id(is_quiet_hour) = (current_minutes_total >= start_minutes_total || current_minutes_total <= end_minutes_total);
+          }
+
+          if (was_quiet != id(is_quiet_hour)) {
+            if (id(is_quiet_hour)) {
+              ESP_LOGI("[QUIET]", "Entering quiet hours (%02d:%02d-%02d:%02d)", start_hour, start_minute, end_hour, end_minute);
+            } else {
+              ESP_LOGI("[QUIET]", "Exiting quiet hours (%02d:%02d-%02d:%02d)", start_hour, start_minute, end_hour, end_minute);
+            }
+          }
+
+  - id: dispense_complete_check
+    then:
+      - lambda: |-
+          if (id(system_state) != 1) {
+            return;
+          }
+
+          // Check if stepper has reached its target position
+          if (id(treat_stepper).current_position != id(treat_stepper).target_position) {
+            return;  // Still moving
+          }
+
+          auto elapsed = millis() - id(dispense_start_time);
+          ESP_LOGI("[STEPPER]", "Dispense complete (%lu ms)", elapsed);
+          id(total_treats_dispensed) += 1;
+          ESP_LOGI("[TREAT]", "Total treats dispensed: %d", id(total_treats_dispensed));
+          id(set_state_idle).execute();
+
+

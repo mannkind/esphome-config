@@ -1,0 +1,131 @@
+sensor:
+  # Total distance tracking
+  - platform: template
+    name: "Total - Distance"
+    id: total_distance_sensor
+    unit_of_measurement: "cm"
+    icon: "mdi:map-marker-distance"
+    device_class: distance
+    state_class: total_increasing
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      return id(total_distance);
+
+  # Total treats dispensed counter
+  - platform: template
+    name: "Total - Treats Dispensed"
+    id: total_treats_dispensed_sensor
+    icon: "mdi:bone"
+    state_class: total_increasing
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      return id(total_treats_dispensed);
+
+  # Current session progress
+  - platform: template
+    name: "Treat - Distance Since Last"
+    id: distance_since_treat_sensor
+    unit_of_measurement: "cm"
+    icon: "mdi:run"
+    device_class: distance
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      return id(magnet_detected_count) * id(hall_effect_run_distance_multiplier);
+
+  # Activity monitoring
+  - platform: template
+    name: "Wheel - Seconds Since Last Rotation"
+    id: last_activity_time_sensor
+    unit_of_measurement: "s"
+    icon: "mdi:clock-outline"
+    device_class: duration
+    lambda: |-
+      if (id(last_activity_time) == 0) {
+        return {};  // No activity recorded yet
+      }
+      auto current_time = millis();
+      auto inactive_time = current_time - id(last_activity_time);
+      return inactive_time / 1000.0;
+    update_interval: ${sensor_update_medium}
+
+  # Training progress indicator
+  - platform: template
+    name: "Treat - Next Distance"
+    id: next_treat_distance_sensor
+    unit_of_measurement: "cm"
+    icon: "mdi:target"
+    device_class: distance
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      auto required_distance = id(distance_threshold) * id(treat_interval_multiplier);
+      return required_distance;
+
+  # ================================================================
+  # STATISTICS TRACKING
+  # ================================================================
+
+  # Average distance per treat (lifetime statistic)
+  - platform: template
+    name: "Statistics - Average Distance Per Treat"
+    id: avg_distance_per_treat_sensor
+    unit_of_measurement: "cm"
+    icon: "mdi:chart-line"
+    device_class: distance
+    state_class: measurement
+    update_interval: ${sensor_update_slow}
+    lambda: |-
+      if (id(total_treats_dispensed) == 0) {
+        return {};
+      }
+      float avg = (float)id(total_distance) / (float)id(total_treats_dispensed);
+      return avg;
+
+  # Current training interval multiplier
+  - platform: template
+    name: "Statistics - Current Training Interval"
+    id: current_interval_sensor
+    icon: "mdi:numeric"
+    state_class: measurement
+    entity_category: diagnostic
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      return id(treat_interval_multiplier);
+
+  # Progress percentage toward next treat
+  - platform: template
+    name: "Statistics - Progress To Next Treat"
+    id: progress_percentage_sensor
+    unit_of_measurement: "%"
+    icon: "mdi:percent"
+    state_class: measurement
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      auto current_distance = id(magnet_detected_count) * id(hall_effect_run_distance_multiplier);
+      auto required_distance = id(distance_threshold) * id(treat_interval_multiplier);
+
+      if (required_distance == 0) {
+        return 0.0;
+      }
+
+      float progress = ((float)current_distance / (float)required_distance) * 100.0;
+      if (progress > 100.0) {
+        progress = 100.0;
+      }
+      return progress;
+
+  # Session uptime
+  - platform: template
+    name: "Statistics - Session Uptime"
+    id: session_uptime_sensor
+    unit_of_measurement: "min"
+    icon: "mdi:timer-outline"
+    device_class: duration
+    state_class: measurement
+    update_interval: ${sensor_update_medium}
+    lambda: |-
+      if (id(last_activity_time) == 0) {
+        return 0.0;
+      }
+      auto current_time = millis();
+      auto session_duration = current_time;
+      return session_duration / 60000.0;
