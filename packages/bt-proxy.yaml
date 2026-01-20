@@ -1,0 +1,48 @@
+esp32_ble_tracker:
+  scan_parameters:
+    # We currently use the defaults to ensure Bluetooth
+    # can co-exist with WiFi In the future we may be able to
+    # enable the built-in coexistence logic in ESP-IDF
+    active: true
+
+bluetooth_proxy:
+  active: true
+
+# ble_client:
+#   - mac_address: 'D9:07:3A:C8:CC:4D'
+#     id: meshcore_mosaic
+#     auto_connect: false
+#     on_passkey_request:
+#       then:
+#         - logger.log: "Authenticating with passkey"
+#         - ble_client.passkey_reply:
+#             passkey: 203201
+#             id: meshcore_mosaic
+#     on_numeric_comparison_request:
+#       then:
+#         - ble_client.numeric_comparison_reply:
+#             accept: True
+#             id: meshcore_mosaic
+#   - mac_address: 'C1:80:D4:1C:51:ED'
+#     id: meshtastic_mosaic
+#     auto_connect: false
+#     on_passkey_request:
+#       then:
+#         - logger.log: "Authenticating with passkey"
+#         - ble_client.passkey_reply:
+#             passkey: 203201
+#             id: meshtastic_mosaic
+#     on_numeric_comparison_request:
+#       then:
+#         - ble_client.numeric_comparison_reply:
+#             accept: True
+#             id: meshtastic_mosaic
+
+#   - mac_address: CF:B0:EF:3C:15:0A
+#     id: meshtastic_brewery
+#     on_passkey_request:
+#       then:
+#         - logger.log: "Authenticating with passkey"
+#         - ble_client.passkey_reply:
+#             id: meshtastic_brewery
+#             passkey: 203201

@@ -1,0 +1,154 @@
+# Cat Wheel Trainer - Control Configuration
+# Servo controls and user interface elements
+
+output:
+  # PWM output for treat dispenser servo
+  - platform: ledc
+    id: treat_dispenser_pwm
+    pin: GPIO18
+    frequency: 50Hz
+
+servo:
+  - id: treat_dispenser_servo
+    output: treat_dispenser_pwm
+    auto_detach_time: 1s
+    min_level: 3%
+    max_level: 12%
+    idle_level: 7.5%
+
+number:
+  # Distance threshold for treat dispensing
+  - platform: template
+    name: "Treat - Distance Threshold"
+    id: distance_threshold_number
+    min_value: 1
+    max_value: 100
+    step: 1
+    optimistic: true
+    initial_value: 10
+    unit_of_measurement: "ft"
+    entity_category: config
+    on_value:
+      - lambda: |-
+          ESP_LOGI("[CONFIG]", "Distance threshold changed to: %d ft", (int)x);
+          id(distance_threshold) = (int)x;
+
+  # Servo dispense speed control
+  - platform: template
+    name: "Servo - Dispense Speed"
+    id: servo_dispense_speed_number
+    min_value: 50
+    max_value: 500
+    step: 10
+    optimistic: true
+    initial_value: 150
+    unit_of_measurement: "ms"
+    entity_category: config
+    on_value:
+      - lambda: |-
+          ESP_LOGI("[CONFIG]", "Servo dispense speed changed to: %d ms", (int)x);
+          id(servo_dispense_speed) = (int)x;
+
+  # Wheel distance per rotation
+  - platform: template
+    name: "Wheel - Distance Per Rotation"
+    id: hall_effect_distance_number
+    min_value: 10
+    max_value: 50
+    step: 1
+    optimistic: true
+    initial_value: 23
+    unit_of_measurement: "cm"
+    entity_category: config
+    on_value:
+      - lambda: |-
+          ESP_LOGI("[CONFIG]", "Wheel distance per rotation changed to: %d cm", (int)x);
+          id(hall_effect_run_distance_multiplier) = (int)x;
+
+  # Inactivity reset time
+  - platform: template
+    name: "Inactivity - Reset Time"
+    id: inactivity_reset_time_number
+    min_value: 60
+    max_value: 1800
+    step: 30
+    optimistic: true
+    initial_value: 300
+    unit_of_measurement: "s"
+    entity_category: config
+    on_value:
+      - lambda: |-
+          ESP_LOGI("[CONFIG]", "Inactivity reset time changed to: %d seconds", (int)x);
+          id(inactivity_reset_time) = (int)x * 1000;
+
+  # Failed attempts threshold
+  - platform: template
+    name: "Treat - Max Failed Attempts"
+    id: max_failed_dispense_attempts_number
+    min_value: 1
+    max_value: 10
+    step: 1
+    optimistic: true
+    initial_value: 4
+    unit_of_measurement: "attempts"
+    entity_category: config
+    on_value:
+      - lambda: |-
+          ESP_LOGI("[CONFIG]", "Max failed dispense attempts changed to: %d", (int)x);
+          id(max_failed_dispense_attempts) = (int)x;
+
+datetime:
+  # Quiet hours start time
+  - platform: template
+    name: "Quiet Hours - Start Time"
+    id: quiet_hours_start_time
+    type: time
+    optimistic: true
+    entity_category: config
+    initial_value: "22:00:00"
+    on_value:
+      - lambda: |-
+          ESP_LOGI("[CONFIG]", "Quiet hours start time changed to: %02d:%02d", x.hour, x.minute);
+          id(quiet_hours_start_hour) = x.hour;
+          id(quiet_hours_start_minute) = x.minute;
+      - script.execute: update_quiet_hours_status
+
+  # Quiet hours end time
+  - platform: template
+    name: "Quiet Hours - End Time"
+    id: quiet_hours_end_time
+    type: time
+    optimistic: true
+    entity_category: config
+    initial_value: "07:00:00"
+    on_value:
+      - lambda: |-
+          ESP_LOGI("[CONFIG]", "Quiet hours end time changed to: %02d:%02d", x.hour, x.minute);
+          id(quiet_hours_end_hour) = x.hour;
+          id(quiet_hours_end_minute) = x.minute;
+      - script.execute: update_quiet_hours_status
+
+button:
+  # Reset session statistics
+  - platform: template
+    name: "Session - Reset Stats"
+    entity_category: config
+    icon: "mdi:restart"
+    on_press:
+      - script.execute: reset_session_stats
+
+  # Manual treat dispense
+  - platform: template
+    name: "Dispenser - Manual Treat"
+    entity_category: config
+    icon: "mdi:food-drumstick"
+    on_press:
+      - script.execute: manual_dispense_treat
+
+  # Reset all statistics
+  - platform: template
+    name: "System - Reset All Stats"
+    entity_category: config
+    icon: "mdi:restart-alert"
+    on_press:
+      - script.execute: reset_all_stats

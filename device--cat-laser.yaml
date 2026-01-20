@@ -1,0 +1,55 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/wifi.yaml
+  esp32: !include packages/esp32-d1_mini32.yaml
+
+substitutions:
+  slug: cat-laser
+  name: Cat Laser
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+  services:
+    - service: servo_y
+      variables:
+        level: float
+      then:
+        - servo.write:
+            id: servo_y
+            level: !lambda "return level / 100.0;"
+    - service: servo_x
+      variables:
+        level: float
+      then:
+        - servo.write:
+            id: servo_x
+            level: !lambda "return level / 100.0;"
+
+output:
+  - platform: ledc
+    id: pwm_1
+    pin: D5
+    frequency: 50 Hz
+  - platform: ledc
+    id: pwm_2
+    pin: D6
+    frequency: 50 Hz
+
+servo:
+  - id: servo_y
+    output: pwm_1
+    transition_length: 5s
+    auto_detach_time: 20s
+  - id: servo_x
+    output: pwm_2
+    transition_length: 5s
+    auto_detach_time: 20s
+
+# Example configuration entry
+switch:
+  - platform: gpio
+    pin: D7
+    name: "Laser Pointer"
+    restore_mode: ALWAYS_OFF

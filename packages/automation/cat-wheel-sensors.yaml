@@ -1,0 +1,45 @@
+# Cat Wheel Trainer - Sensor Configuration
+# Physical sensors for wheel rotation, hopper, and dispenser detection
+
+binary_sensor:
+  # Wheel rotation detection sensor
+  - platform: gpio
+    pin:
+      number: GPIO22
+      mode: INPUT_PULLUP
+    name: "Wheel - Rotation Sensor"
+    internal: true
+    entity_category: diagnostic
+    icon: "mdi:rotate-orbit"
+    filters:
+      - delayed_off: ${sensor_debounce_ms}ms
+    on_press:
+      - script.execute: wheel_rotation_action
+
+  # Hopper fullness detection sensor
+  - platform: gpio
+    pin:
+      number: GPIO17
+      mode: INPUT_PULLUP
+    name: "Hopper - Light Break Sensor"
+    id: hopper_sensor
+    entity_category: diagnostic
+    icon: "mdi:lightbulb-on"
+    filters:
+      - delayed_off: ${sensor_debounce_ms}ms
+    on_press:
+      - script.execute: treats_available_action
+
+  # Treat dispense detection sensor
+  - platform: gpio
+    pin:
+      number: GPIO21
+      mode: INPUT_PULLUP
+    name: "Dispenser - Light Break Sensor"
+    id: dispenser_sensor
+    entity_category: diagnostic
+    icon: "mdi:lightbulb-on"
+    filters:
+      - delayed_off: ${sensor_debounce_ms}ms
+    on_press:
+      - script.execute: treat_dispensed_action

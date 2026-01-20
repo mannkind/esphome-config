@@ -1,0 +1,48 @@
+name: Build Firmware(s)
+
+on:
+  push:
+  schedule:
+    - cron: "30 13 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ESPHome binary for ${{ matrix.file }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        file:
+          - device--bt-proxy-bedrooms-poe.yaml
+          - device--bt-proxy-office-poe.yaml
+          - device--cat-laser.yaml
+          - device--cat-wheel-trainer.yaml
+          - device--co2-bedrooms.yaml
+          - device--co2-main.yaml
+          - device--co2-office.yaml
+          - device--fireplace.yaml
+          - device--garage.yaml
+          - device--outdoor-patio-outlets.yaml
+          - device--outdoor-patio-shades.yaml
+          - device--treat-dispenser.yaml
+    outputs:
+      esphome-version: ${{ steps.esphome-build.outputs.esphome-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decrypt Secrets
+        env:
+          SECRET_YAML: ${{ secrets.SECRET_YAML }}
+        run: |
+          echo "$SECRET_YAML" > secrets.yaml
+      - uses: esphome/build-action@v6
+        id: esphome-build
+        with:
+          yaml-file: ${{ matrix.file }}
+          version: latest
+      - run: |
+          mkdir output
+          mv "${{ steps.esphome-build.outputs.name }}" output/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: esphome-${{ steps.esphome-build.outputs.name }}
+          path: output

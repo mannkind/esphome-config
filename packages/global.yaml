@@ -1,0 +1,32 @@
+esphome:
+  name: ${slug}
+  friendly_name: ${name}
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+logger:
+  level: info
+
+ota:
+  - platform: esphome
+
+sensor:
+  - platform: uptime
+    name: Uptime
+    update_interval: 60s  # Standardized diagnostic update interval
+    entity_category: diagnostic
+
+binary_sensor:   
+  - platform: status
+    name: Status
+
+button:
+  - platform: safe_mode
+    name: Safe Mode Boot
+    entity_category: diagnostic
+
+  - platform: restart
+    name: Restart
+    entity_category: diagnostic

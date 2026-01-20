@@ -1,0 +1,81 @@
+# Cat Wheel Trainer - Metrics and Tracking
+# Distance, time, and performance tracking sensors
+
+sensor:
+  # Total distance tracking
+  - platform: template
+    name: "Total - Distance"
+    id: total_distance_sensor
+    unit_of_measurement: "ft"
+    icon: "mdi:map-marker-distance"
+    accuracy_decimals: 1
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      return id(total_distance);
+    on_value:
+      then:
+        - component.update: distance_this_session_sensor
+
+  # Session distance tracking
+  - platform: template
+    name: "Distance This Session"
+    id: distance_this_session_sensor
+    unit_of_measurement: "ft"
+    icon: "mdi:map-marker-distance"
+    accuracy_decimals: 1
+    lambda: |-
+      return id(total_distance) - id(distance_at_session_start);
+
+  # Session duration tracking
+  - platform: template
+    name: "Session Duration"
+    id: session_duration_sensor
+    unit_of_measurement: "min"
+    icon: "mdi:clock"
+    accuracy_decimals: 1
+    update_interval: ${sensor_update_medium}
+    lambda: |-
+      if (id(session_start_time) == 0) {
+        return 0;
+      }
+      return (millis() - id(session_start_time)) / 60000.0;
+
+  # Last run duration
+  - platform: template
+    name: "Last Run Duration"
+    id: last_run_duration_sensor
+    unit_of_measurement: "min"
+    icon: "mdi:clock"
+    accuracy_decimals: 1
+    lambda: |-
+      return id(last_run_duration) / 60000.0;
+
+  # Speed tracking (distance per minute)
+  - platform: template
+    name: "Current Speed"
+    id: current_speed_sensor
+    unit_of_measurement: "ft/min"
+    icon: "mdi:speedometer"
+    accuracy_decimals: 1
+    update_interval: ${sensor_update_medium}
+    lambda: |-
+      if (id(last_minute_distance_total) <= 0) {
+        return 0;
+      }
+      return id(last_minute_distance_total);
+
+  # Average speed for current session
+  - platform: template
+    name: "Average Speed This Session"
+    id: average_speed_session_sensor
+    unit_of_measurement: "ft/min"
+    icon: "mdi:speedometer"
+    accuracy_decimals: 1
+    update_interval: ${sensor_update_medium}
+    lambda: |-
+      float session_duration_minutes = (millis() - id(session_start_time)) / 60000.0;
+      if (session_duration_minutes <= 0) {
+        return 0;
+      }
+      float distance = id(total_distance) - id(distance_at_session_start);
+      return distance / session_duration_minutes;

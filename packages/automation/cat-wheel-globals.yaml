@@ -1,0 +1,133 @@
+# Cat Wheel Trainer - Global Variables
+# System state, configuration, and tracking variables
+
+globals:
+  # System state machine: 0=IDLE, 1=DISPENSING, 3=OUT_OF_TREATS
+  - id: system_state
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+  # Timing tracking for state transitions
+  - id: dispense_start_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  # Current session progress tracking
+  - id: magnet_detected_count
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+  # Progressive training interval multiplier
+  - id: treat_interval_multiplier
+    type: int
+    restore_value: no
+    initial_value: "1"
+
+  # Activity monitoring
+  - id: last_activity_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  - id: last_wheel_rotation_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  # Session tracking
+  - id: session_start_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  - id: distance_at_session_start
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+  - id: last_run_duration
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  # Speed calculation variables
+  - id: last_minute_distance_total
+    type: float
+    restore_value: no
+    initial_value: "0"
+
+  # Quiet hours state
+  - id: is_quiet_hour
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+  # Hardware calibration (persistent settings)
+  - id: hall_effect_run_distance_multiplier
+    type: int
+    restore_value: yes
+    initial_value: "23"
+
+  # Training thresholds (persistent settings)
+  - id: distance_threshold
+    type: int
+    restore_value: yes
+    initial_value: "10"
+
+  # Timing configuration (persistent settings)
+  - id: inactivity_reset_time
+    type: unsigned long
+    restore_value: yes
+    initial_value: "300000"
+
+  # Servo configuration (persistent settings)
+  - id: servo_dispense_speed
+    type: int
+    restore_value: yes
+    initial_value: "150"
+
+  # Quiet hours configuration (persistent settings)
+  - id: quiet_hours_start_hour
+    type: int
+    restore_value: yes
+    initial_value: "22"
+
+  - id: quiet_hours_start_minute
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+  - id: quiet_hours_end_hour
+    type: int
+    restore_value: yes
+    initial_value: "7"
+
+  - id: quiet_hours_end_minute
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+  # Error handling (persistent settings)
+  - id: failed_dispense_attempts
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+  - id: max_failed_dispense_attempts
+    type: int
+    restore_value: yes
+    initial_value: "4"
+
+  # Statistics tracking (persistent data)
+  - id: total_distance
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+  - id: total_treats_dispensed
+    type: int
+    restore_value: yes
+    initial_value: "0"

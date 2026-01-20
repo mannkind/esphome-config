@@ -1,0 +1,16 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/wifi.yaml
+  esp8266: !include packages/esp8266-d1_mini.yaml
+
+substitutions:
+  slug: fireplace
+  name: Fireplace
+
+switch:
+  - platform: gpio
+    name: Switch
+    icon: mdi:fire
+    pin:
+      number: D2
+      inverted: True

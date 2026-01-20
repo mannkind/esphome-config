@@ -1,0 +1,189 @@
+# Cat Wheel Trainer - Core Logic and Scripts
+# Main automation logic, state management, and interval scripts
+
+script:
+  # State management helpers
+  - id: set_state_idle
+    then:
+      - lambda: |-
+          ESP_LOGI("[STATE]", "Now in IDLE state");
+          id(system_state) = 0;
+          id(dispense_start_time) = 0;
+          id(treat_dispenser_servo).write(0.5);
+
+  - id: set_state_dispensing
+    then:
+      - lambda: |-
+          ESP_LOGI("[STATE]", "Now in DISPENSING state, servo speed: %.2f", id(servo_dispense_speed));
+          id(system_state) = 1;
+          id(dispense_start_time) = millis();
+          // Activate servo for treat dispensing
+          id(treat_dispenser_servo).write(0.8);
+      - delay: !lambda "return id(servo_dispense_speed);"
+      - lambda: |-
+          id(treat_dispenser_servo).write(0.5);
+
+  - id: set_state_out_of_treats
+    then:
+      - lambda: |-
+          ESP_LOGI("[STATE]", "Now in OUT_OF_TREATS state");
+          id(system_state) = 3;
+          id(dispense_start_time) = 0;
+          id(treat_dispenser_servo).write(0.5);
+
+  # Main wheel rotation logic
+  - id: wheel_rotation_action
+    then:
+      - lambda: |-
+          ESP_LOGD("[WHEEL]", "Rotation detected");
+          id(magnet_detected_count) += 1;
+          id(total_distance) += id(hall_effect_run_distance_multiplier);
+          id(last_activity_time) = millis();
+          id(last_wheel_rotation_time) = millis();
+
+          auto current_distance = id(magnet_detected_count) * id(hall_effect_run_distance_multiplier);
+          auto required_distance = id(distance_threshold) * id(treat_interval_multiplier);
+
+          ESP_LOGD("[WHEEL]", "Progress: %d/%d cm (total: %d cm)",
+                    current_distance, required_distance, id(total_distance));
+
+          // Check if we're in quiet hours
+          if (id(is_quiet_hour)) {
+            ESP_LOGI("[QUIET]", "Treat earned but not dispensed due to quiet hours");
+            return;
+          }
+
+          // Check if out of treats
+          if (id(system_state) == 3) {
+            ESP_LOGW("[TREAT]", "Treat earned but hopper is empty");
+            return;
+          }
+
+          // Check if enough distance has been covered
+          if (current_distance < required_distance) {
+            return;
+          }
+
+          ESP_LOGI("[TREAT]", "Dispensing treat! Interval: %d", id(treat_interval_multiplier));
+          id(magnet_detected_count) = 0;
+          id(treat_interval_multiplier) += 1;
+
+          // Update relevant sensors
+          id(total_distance_sensor).update();
+          id(distance_this_session_sensor).update();
+          id(set_state_dispensing).execute();
+
+  # Sensor action scripts
+  - id: treats_available_action
+    then:
+      - lambda: |-
+          ESP_LOGI("[HOPPER]", "Treats available");
+          id(failed_dispense_attempts) = 0;
+
+  - id: treat_dispensed_action
+    then:
+      - lambda: |-
+          ESP_LOGI("[TREAT]", "Treat dispensed successfully");
+          id(total_treats_dispensed) += 1;
+          id(failed_dispense_attempts) = 0;
+          id(set_state_idle).execute();
+
+  # Reset and maintenance scripts
+  - id: reset_session_stats
+    then:
+      - lambda: |-
+          ESP_LOGI("[RESET]", "Resetting session statistics");
+          id(distance_at_session_start) = id(total_distance);
+          id(session_start_time) = millis();
+
+  - id: reset_all_stats
+    then:
+      - lambda: |-
+          ESP_LOGI("[RESET]", "Resetting all statistics");
+          id(total_distance) = 0;
+          id(total_treats_dispensed) = 0;
+          id(distance_at_session_start) = 0;
+          id(session_start_time) = millis();
+          id(reset_system_state).execute();
+
+  - id: reset_system_state
+    then:
+      - lambda: |-
+          ESP_LOGI("[RESET]", "System state reset");
+          id(treat_interval_multiplier) = 1;
+          id(magnet_detected_count) = 0;
+          id(failed_dispense_attempts) = 0;
+          id(last_activity_time) = 0;
+          id(last_wheel_rotation_time) = 0;
+          id(set_state_idle).execute();
+
+  - id: manual_dispense_treat
+    then:
+      - if:
+          condition:
+            lambda: 'return id(system_state) != 3;'
+          then:
+            - script.execute: set_state_dispensing
+          else:
+            - logger.log:
+                format: "Cannot dispense treat - hopper is empty"
+                level: WARN
+
+  # Interval check scripts
+  - id: inactivity_check
+    then:
+      - lambda: |-
+          if (id(last_activity_time) == 0 ||
+              (millis() - id(last_activity_time)) <= id(inactivity_reset_time)) {
+            return;
+          }
+          ESP_LOGI("[INACTIVITY]", "Resetting due to inactivity");
+          id(treat_interval_multiplier) = 1;
+          id(magnet_detected_count) = 0;
+          id(last_wheel_rotation_time) = 0;
+          id(last_activity_time) = 0;
+          id(set_state_idle).execute();
+
+  - id: treat_timeout_check
+    then:
+      - lambda: |-
+          if (id(system_state) != 1 || id(dispense_start_time) == 0) {
+            return;
+          }
+          if ((millis() - id(dispense_start_time)) > ${dispense_timeout_ms}) {
+            ESP_LOGW("[TIMEOUT]", "Treat dispense timeout, incrementing failed attempts");
+            id(failed_dispense_attempts) += 1;
+            if (id(failed_dispense_attempts) >= id(max_failed_dispense_attempts)) {
+              ESP_LOGW("[HOPPER]", "Max failed attempts reached, marking as out of treats");
+              id(set_state_out_of_treats).execute();
+            } else {
+              id(set_state_idle).execute();
+            }
+          }
+
+  - id: update_quiet_hours_status
+    then:
+      - lambda: |-
+          auto time = id(sntp_time).now();
+          if (!time.is_valid()) {
+            id(is_quiet_hour) = false;
+            return;
+          }
+
+          int current_hour = time.hour;
+          int current_minute = time.minute;
+          int current_time_minutes = current_hour * 60 + current_minute;
+          int start_time_minutes = id(quiet_hours_start_hour) * 60 + id(quiet_hours_start_minute);
+          int end_time_minutes = id(quiet_hours_end_hour) * 60 + id(quiet_hours_end_minute);
+
+          bool was_quiet = id(is_quiet_hour);
+
+          if (start_time_minutes < end_time_minutes) {
+            id(is_quiet_hour) = (current_time_minutes >= start_time_minutes && current_time_minutes < end_time_minutes);
+          } else {
+            id(is_quiet_hour) = (current_time_minutes >= start_time_minutes || current_time_minutes < end_time_minutes);
+          }
+
+          if (was_quiet && !id(is_quiet_hour)) {
+            ESP_LOGI("[QUIET]", "Quiet hours ended, checking for pending treats");
+          }

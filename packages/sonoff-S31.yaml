@@ -1,0 +1,59 @@
+uart:
+  rx_pin: RX
+  baud_rate: 4800
+  parity: EVEN
+
+sensor:
+  - platform: total_daily_energy
+    name: Energy
+    power_id: power
+
+  - platform: cse7766
+    current:
+      name: Current
+      filters:
+        - sliding_window_moving_average:
+            window_size: 4
+            send_every: 4
+    voltage:
+      name: Voltage
+      filters:
+        - sliding_window_moving_average:
+            window_size: 4
+            send_every: 4
+    power:
+      name: Power
+      id: power
+      unit_of_measurement: kW
+      accuracy_decimals: 3
+      filters:
+        - multiply: 0.001
+        - sliding_window_moving_average:
+            window_size: 4
+            send_every: 4
+
+binary_sensor:
+  - platform: gpio
+    id: btn_sensor
+    internal: true
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      then:
+        - switch.toggle: relay
+
+switch:
+  - platform: gpio
+    name: Switch
+    id: relay
+    icon: mdi:toggle-switch
+    pin: GPIO12
+    restore_mode: RESTORE_DEFAULT_ON
+
+status_led:
+  pin: GPIO13
+
+time:
+  - platform: sntp

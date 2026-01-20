@@ -1,0 +1,119 @@
+# Cat Wheel Trainer - Status and Information Sensors
+# Text sensors and status displays
+
+text_sensor:
+  # System state display
+  - platform: template
+    name: "System - State"
+    id: system_state_sensor
+    entity_category: diagnostic
+    icon: "mdi:state-machine"
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      switch(id(system_state)) {
+        case 0: return std::string("Idle");
+        case 1: return std::string("Dispensing");
+        case 3: return std::string("Out of Treats");
+        default: return std::string("Unknown");
+      }
+
+  # Hopper status with detailed information
+  - platform: template
+    name: "Hopper - Status"
+    id: hopper_status_sensor
+    entity_category: diagnostic
+    icon: "mdi:food-drumstick"
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      if (id(system_state) == 3) {
+        return std::string("Empty (Failed: " + to_string(id(failed_dispense_attempts)) + "/" + to_string(id(max_failed_dispense_attempts)) + ")");
+      } else {
+        return std::string("OK");
+      }
+
+  # Quiet hours status with time information
+  - platform: template
+    name: "Quiet Hours - Status"
+    id: quiet_hours_status_sensor
+    entity_category: diagnostic
+    icon: "mdi:volume-off"
+    update_interval: ${sensor_update_slow}
+    lambda: |-
+      if (id(is_quiet_hour)) {
+        return std::string("Active");
+      } else {
+        return std::string("Inactive");
+      }
+
+binary_sensor:
+  # Training session active indicator
+  - platform: template
+    name: "Training - Session Active"
+    id: training_session_active
+    device_class: running
+    lambda: |-
+      return (millis() - id(last_activity_time)) < id(inactivity_reset_time);
+
+  # Quiet hours active indicator
+  - platform: template
+    name: "Quiet Hours - Active"
+    id: quiet_hours_active
+    device_class: running
+    lambda: |-
+      return id(is_quiet_hour);
+
+sensor:
+  # Current treat interval requirement
+  - platform: template
+    name: "Next Treat - Distance Required"
+    id: next_treat_distance_sensor
+    unit_of_measurement: "ft"
+    icon: "mdi:map-marker-distance"
+    accuracy_decimals: 1
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      return (id(distance_threshold) * id(treat_interval_multiplier) * 0.0328084);
+
+  # Distance since last treat
+  - platform: template
+    name: "Distance - Since Last Treat"
+    id: distance_since_treat_sensor
+    unit_of_measurement: "ft"
+    icon: "mdi:map-marker-distance"
+    accuracy_decimals: 1
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      return (id(magnet_detected_count) * id(hall_effect_run_distance_multiplier) * 0.0328084);
+
+  # Time since last activity
+  - platform: template
+    name: "Last Activity - Time Ago"
+    id: last_activity_time_sensor
+    unit_of_measurement: "min"
+    icon: "mdi:clock"
+    accuracy_decimals: 1
+    update_interval: ${sensor_update_medium}
+    lambda: |-
+      if (id(last_activity_time) == 0) {
+        return 0;
+      }
+      return (millis() - id(last_activity_time)) / 60000.0;
+
+  # Total treats dispensed counter
+  - platform: template
+    name: "Total - Treats Dispensed"
+    id: total_treats_dispensed_sensor
+    icon: "mdi:food-drumstick"
+    update_interval: ${sensor_update_slow}
+    lambda: |-
+      return id(total_treats_dispensed);
+
+  # Current treat interval multiplier
+  - platform: template
+    name: "Training - Interval Multiplier"
+    id: treat_interval_multiplier_sensor
+    icon: "mdi:multiplication"
+    entity_category: diagnostic
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      return id(treat_interval_multiplier);

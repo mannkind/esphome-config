@@ -1,0 +1,9 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/wifi.yaml
+  esp8266: !include packages/esp8266-d1_mini.yaml
+  bt-proxy: !include packages/co2.yaml
+
+substitutions:
+  slug: co2-main
+  name: CO2 Main

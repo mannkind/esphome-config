@@ -1,0 +1,82 @@
+# Cat Wheel Trainer - Main Configuration
+# Interactive cat exercise wheel with sensors and treat rewards
+
+packages:
+  # Base system packages
+  global: !include packages/global.yaml
+  wifi: !include packages/wifi.yaml
+  esp32: !include packages/esp32-d1_mini32.yaml
+
+  # Cat wheel specific packages
+  sensors: !include packages/automation/cat-wheel-sensors.yaml
+  metrics: !include packages/automation/cat-wheel-metrics.yaml
+  controls: !include packages/automation/cat-wheel-controls.yaml
+  logic: !include packages/automation/cat-wheel-logic.yaml
+  globals: !include packages/automation/cat-wheel-globals.yaml
+  status: !include packages/automation/cat-wheel-status.yaml
+
+logger:
+  level: info
+
+substitutions:
+  slug: cat-wheel-trainer
+  name: Cat Wheel Trainer
+
+  # Timing configuration
+  dispense_timeout_ms: "10000"
+  sensor_debounce_ms: "5"
+  sensor_update_fast: "1s"
+  sensor_update_medium: "2s"
+  sensor_update_slow: "10s"
+
+# Time synchronization for quiet hours
+time:
+  - platform: sntp
+    id: sntp_time
+    on_time_sync:
+      - logger.log:
+          format: "Time synchronized: %s"
+          args: ['id(sntp_time).now().strftime("%Y-%m-%d %H:%M:%S").c_str()']
+          level: INFO
+
+# Boot sequence and initialization
+esphome:
+  on_boot:
+    priority: -100
+    then:
+      - logger.log:
+          format: "Cat Wheel Trainer starting up..."
+          level: INFO
+      - lambda: |-
+          // Validate and sync number components with restored global values
+          ESP_LOGI("BOOT", "Syncing configuration values from flash...");
+
+          // Sync number components with global variables
+          id(inactivity_reset_time_number).publish_state(id(inactivity_reset_time) / 1000.0);
+          id(distance_threshold_number).publish_state(id(distance_threshold));
+          id(hall_effect_distance_number).publish_state(id(hall_effect_run_distance_multiplier));
+          id(servo_dispense_speed_number).publish_state(id(servo_dispense_speed));
+          id(max_failed_dispense_attempts_number).publish_state(id(max_failed_dispense_attempts));
+
+          // Initialize session tracking
+          id(session_start_time) = millis();
+          id(distance_at_session_start) = id(total_distance);
+
+          ESP_LOGI("BOOT", "Cat Wheel Trainer ready!");
+
+# Interval timers for background tasks
+interval:
+  # Check for inactivity and reset training progress
+  - interval: 15s
+    then:
+      - script.execute: inactivity_check
+
+  # Monitor treat dispensing timeout
+  - interval: 1s
+    then:
+      - script.execute: treat_timeout_check
+
+  # Update quiet hours status
+  - interval: 60s
+    then:
+      - script.execute: update_quiet_hours_status

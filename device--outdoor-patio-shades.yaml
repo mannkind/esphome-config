@@ -1,0 +1,82 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/wifi.yaml
+  esp32: !include packages/esp32-d1_mini32.yaml
+
+substitutions:
+  slug: outdoor-patio-shades
+  name: Outdoor Patio Shades
+
+# Individual sensors
+output:
+  - platform: gpio
+    id: ch_up
+    pin:
+      number: GPIO16
+
+  - platform: gpio
+    id: ch_down
+    pin:
+      number: GPIO18
+
+  - platform: gpio
+    id: down
+    pin:
+      number: GPIO19
+
+  - platform: gpio
+    id: stop
+    pin:
+      number: GPIO23
+
+  - platform: gpio
+    id: up
+    pin:
+      number: GPIO5
+
+button:
+  - platform: output
+    id: up_btn
+    name: Up
+    output: up
+    duration: 500ms
+    internal: true
+  
+  - platform: output
+    id: down_btn
+    name: Down
+    output: down
+    duration: 500ms
+    internal: true
+  
+  - platform: output
+    id: stop_btn
+    name: Stop
+    output: stop
+    duration: 500ms
+    internal: true
+
+  - platform: output
+    name: Channel Down
+    output: ch_down
+    duration: 500ms
+    internal: true
+
+  - platform: output
+    name: Channel Up
+    output: ch_up
+    duration: 500ms
+    internal: true
+
+cover:
+  - platform: template
+    name: Shades
+    device_class: shade
+    optimistic: true
+    assumed_state: true
+    open_action:
+      - button.press: up_btn
+    close_action:
+      - button.press: down_btn
+    stop_action:
+      - button.press: stop_btn

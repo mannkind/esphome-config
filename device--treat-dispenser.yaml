@@ -1,0 +1,28 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/wifi.yaml
+  esp8266: !include packages/esp8266-d1_mini.yaml
+
+substitutions:
+  slug: treat-dispenser
+  name: Treat Dispenser
+
+servo:
+  - id: treat_servo
+    output: treat_servo_output
+    auto_detach_time: 0.20s
+
+output:
+  - platform: esp8266_pwm
+    id: treat_servo_output
+    pin: D3
+    frequency: 50 Hz
+
+button:
+  - platform: template
+    name: Dispense
+    id: pulse
+    on_press:
+      - servo.write:
+          id: treat_servo
+          level: 1
