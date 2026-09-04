@@ -1,0 +1,46 @@
+
+sensor:
+  - platform: pulse_counter
+    pin:
+      number: GPIO18
+      mode: INPUT_PULLUP
+      allow_other_uses: true
+    id: wheel_pulse_rate
+    name: "Wheel - Rotation Rate"
+    internal: true
+    entity_category: diagnostic
+    use_pcnt: false
+    count_mode:
+      rising_edge: INCREMENT
+      falling_edge: DISABLE
+    internal_filter: ${sensor_rotation_filter_ms}ms
+    update_interval: ${rotation_sample_interval}
+    total:
+      id: wheel_pulse_total
+      internal: true
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO18
+      mode: INPUT_PULLUP
+      # Shared with the pulse counter above.
+      allow_other_uses: true
+    name: "Wheel - Rotation Sensor Raw"
+    id: wheel_rotation_raw
+    internal: true
+    entity_category: diagnostic
+    icon: "mdi:pulse"
+    on_state:
+      - lambda: |-
+          const unsigned long now = millis();
+          if (x) {
+            // Rising edge: magnet arrived. Start timing its presence.
+            id(magnet_present_since) = now;
+          } else {
+            // Falling edge: magnet gone. Close out the present span.
+            if (id(magnet_present_since) != 0) {
+              id(window_present_ms) += now - id(magnet_present_since);
+              id(magnet_present_since) = 0;
+            }
+          }

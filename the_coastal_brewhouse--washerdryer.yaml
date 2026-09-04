@@ -1,0 +1,194 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/coast-wifi.yaml
+  esp32: !include packages/esp32-c3-devkitc.yaml
+
+external_components:
+  - source: github://mguaylam/esphome-gea
+    components: [gea]
+
+substitutions:
+  slug: coast-washerdryer
+  name: Coast Washer Dryer
+
+esphome:
+  name: ${slug}
+  platformio_options:
+    board_build.flash_mode: dio
+  on_boot:
+    - priority: 800
+      then:
+        - light.turn_off: led1
+
+logger:
+  baud_rate: 0
+  logs:
+    gea: ERROR
+
+uart:
+  id: uart_gea
+  tx_pin: 
+    number: GPIO5
+    inverted: true
+  rx_pin: 
+    number: GPIO10
+    inverted: true
+  baud_rate: 19200
+
+gea:
+  id: gea_hub
+  uart_id: uart_gea
+  protocol: gea2  
+  src_address: 0xBB
+  dest_address: 0x23
+  erd_lookup: true
+
+sensor:
+  - platform: gea
+    gea_id: gea_hub
+    name: "Time Remaining"
+    erd: 0x2007
+    decode: uint16_be
+    device_class: duration
+    unit_of_measurement: min
+    accuracy_decimals: 0
+    icon: mdi:timer
+    filters:
+      - lambda: return x / 60.0;
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Selected Cycle (raw)"
+    erd: 0x200A
+    decode: uint8
+    accuracy_decimals: 0
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: gea
+    gea_id: gea_hub
+    name: "Machine State"
+    erd: 0x2000
+    decode: uint8
+    icon: mdi:play-pause
+    options:
+      0x00: "Idle"
+      0x01: "Standby"
+      0x02: "Running"
+      0x03: "Paused"
+      0x04: "End of Cycle"
+      0x05: "DSM Delay"
+      0x06: "Delay Start"
+      0x07: "Delay Paused"
+      0x08: "Drain Timeout"
+      0x09: "Commissioning"
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Sub-Cycle"
+    erd: 0x2001
+    decode: uint8
+    icon: mdi:washing-machine
+    options:
+      0x00: "None"
+      0x01: "Fill"
+      0x02: "Soak"
+      0x03: "Wash"
+      0x04: "Rinse"
+      0x05: "Spin"
+      0x06: "Drain"
+      0x07: "Extra Spin"
+      0x08: "Extra Rinse"
+      0x09: "Tumble"
+
+binary_sensor:
+  - platform: template
+    name: "GEA Bus Connected"
+    entity_category: "diagnostic"
+    lambda: 'return id(gea_hub).is_bus_connected();'
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Lid"
+    erd: 0x2012
+    inverted: true
+    device_class: opening
+       
+output:
+  - platform: ledc
+    pin:
+      number: 2
+      inverted: true
+      ignore_strapping_warning: true
+    id: led1_output
+    max_power: 0.03
+
+  - platform: ledc
+    max_power: 0.03
+    pin: 
+      number: 3
+      inverted: false
+    id: led2_output
+
+  - platform: ledc
+    pin:
+      number: 4
+      inverted: false
+    id: led3_output
+    max_power: 0.06
+
+light:
+  - platform: monochromatic
+    name: "Red LED"
+    output: led1_output
+    id: led1
+    restore_mode: ALWAYS_OFF
+
+  - platform: monochromatic
+    name: "Green LED"
+    output: led2_output
+    id: led2
+    restore_mode: ALWAYS_OFF
+
+  - platform: monochromatic
+    name: "Yellow LED"
+    output: led3_output
+    id: led3
+    restore_mode: ALWAYS_OFF
+
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            if:
+              condition:
+                light.is_off: led2
+              then:
+                - light.turn_on: led2
+          else:
+            if:
+              condition:
+                light.is_on: led2
+              then:
+                - light.turn_off: led2
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(gea_hub).is_bus_connected();
+          then:
+            if:
+              condition:
+                light.is_off: led3
+              then:
+                - light.turn_on: led3
+          else:
+            if:
+              condition:
+                light.is_on: led3
+              then:
+                - light.turn_off: led3

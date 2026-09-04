@@ -1,0 +1,259 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/wifi.yaml
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    advanced: 
+      sram1_as_iram: true
+      minimum_chip_revision: "3.1"
+
+substitutions:
+  slug: cat-litter-box
+  name: Cat Litter Box
+
+external_components:
+  source:
+    type: git
+    url: https://codeberg.org/Joseph-DiGiovanni/esphome-litter-robot.git
+    ref: LR4/0.9.4
+
+uart:
+  - id: uart_bus
+    tx_pin: GPIO19
+    rx_pin: GPIO5
+    baud_rate: 256000
+    rx_buffer_size: 2048
+
+litter_robot4:
+  id: lr4
+  time_id: homeassistant_time
+
+text_sensor:
+  - platform: litter_robot4
+    type: status
+    name: "Status"
+  - platform: litter_robot4
+    type: power_type
+    name: "Power Type"
+
+button:
+  - platform: litter_robot4
+    type: cycle
+    name: "Manual Cycle"
+  - platform: litter_robot4
+    type: empty
+    name: "Empty Litter"
+  - platform: litter_robot4
+    type: replace_filter
+    name: "Replace Filter"
+  - platform: litter_robot4
+    type: factory_reset
+    name: "Factory Reset"
+  - platform: litter_robot4
+    type: power
+    name: "Power"
+  - platform: litter_robot4
+    type: reset
+    name: "Reset"
+
+sensor:
+  - platform: litter_robot4
+    type: waste_drawer_level
+    name: "Waste Drawer Level"
+  - platform: litter_robot4
+    type: litter_level
+    name: "Litter Level"
+  - platform: litter_robot4
+    type: last_cat_weight
+    name: "Last Cat Weight"
+  - platform: litter_robot4
+    type: clean_cycle_count
+    name: "Clean Cycles"
+  - platform: litter_robot4
+    type: power_cycle_count
+    name: "Power Cycles"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: empty_cycle_count
+    name: "Empty Cycles"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: filter_cycle_count
+    name: "Filter Cycles"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: cat_visit_count
+    cat_weight: cat1weight
+    name: "Cat 1 Visits"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: cat_visit_count
+    cat_weight: cat2weight
+    name: "Cat 2 Visits"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: cat_visit_count
+    cat_weight: cat3weight
+    name: "Cat 3 Visits"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: cat_visit_count
+    cat_weight: cat4weight
+    name: "Cat 4 Visits"
+    disabled_by_default: true
+
+number:
+  - platform: litter_robot4
+    type: clean_cycle_delay
+    name: "Clean Cycle Delay"
+  - platform: litter_robot4
+    type: cat_weight
+    name: "Cat 1 Weight"
+    id: cat1weight
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: cat_weight
+    name: "Cat 2 Weight"
+    id: cat2weight
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: cat_weight
+    name: "Cat 3 Weight"
+    id: cat3weight
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: cat_weight
+    name: "Cat 4 Weight"
+    id: cat4weight
+    disabled_by_default: true
+
+select:
+  - platform: litter_robot4
+    type: night_light_mode
+    name: "Night Light Mode"
+  - platform: litter_robot4
+    type: night_light_brightness
+    name: "Night Light Brightness"
+  - platform: litter_robot4
+    type: panel_brightness
+    name: "Panel Brightness"
+
+switch:
+  - platform: litter_robot4
+    type: control_panel_lockout
+    name: "Control Panel Lockout"
+  - platform: litter_robot4
+    type: sleep_schedule_sun
+    name: "Sunday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_mon
+    name: "Monday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_tue
+    name: "Tuesday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_wed
+    name: "Wednesday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_thu
+    name: "Thursday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_fri
+    name: "Friday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_sat
+    name: "Saturday Sleep Schedule"
+    disabled_by_default: true
+
+datetime:
+  - platform: litter_robot4
+    type: sleep_sun
+    name: "Sunday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_sun
+    name: "Sunday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_mon
+    name: "Monday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_mon
+    name: "Monday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_tue
+    name: "Tuesday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_tue
+    name: "Tuesday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_wed
+    name: "Wednesday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_wed
+    name: "Wednesday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_thu
+    name: "Thursday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_thu
+    name: "Thursday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_fri
+    name: "Friday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_fri
+    name: "Friday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_sat
+    name: "Saturday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_sat
+    name: "Saturday Wake Time"
+    disabled_by_default: true
+
+binary_sensor:
+  - platform: litter_robot4
+    type: waste_drawer_full
+    name: "Waste Drawer Full"
+  - platform: litter_robot4
+    type: bonnet_removed
+    name: "Bonnet Removed"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: night_light
+    name: "Night Light"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_status
+    name: "Sleep Status"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: fault_status
+    name: "Fault Status"
+  - platform: litter_robot4
+    type: laser_detect
+    name: "Laser Detect"
+  - platform: litter_robot4
+    type: weight_detect
+    name: "Weight Detect"

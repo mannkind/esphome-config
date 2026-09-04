@@ -1,0 +1,35 @@
+
+sensor:
+  - platform: template
+    name: "Diagnostics - Suppressed Park Pulses"
+    id: diag_suppressed_sensor
+    icon: "mdi:cancel"
+    state_class: total_increasing
+    entity_category: diagnostic
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      return id(suppressed_park_count);
+
+  - platform: template
+    name: "Diagnostics - Magnet Present Duty"
+    id: diag_present_duty_sensor
+    unit_of_measurement: "%"
+    icon: "mdi:square-wave"
+    state_class: measurement
+    entity_category: diagnostic
+    accuracy_decimals: 1
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      return id(window_present_duty);
+
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          ESP_LOGI("[DIAG]", "raw=%s duty=%.0f%% suppressed=%d magnets=%d interval=%.2f distance=%d",
+                   id(wheel_rotation_raw).state ? "HIGH" : "LOW",
+                   id(window_present_duty),
+                   id(suppressed_park_count),
+                   id(magnet_detected_count),
+                   id(treat_interval),
+                   id(total_distance));

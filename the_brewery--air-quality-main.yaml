@@ -1,0 +1,9 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/wifi.yaml
+  esp32: !include packages/esp32-xiao-s3.yaml
+  sen66: !include packages/sen66.yaml
+
+substitutions:
+  slug: air-quality-main
+  name: Air Quality Main

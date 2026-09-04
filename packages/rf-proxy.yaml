@@ -1,0 +1,69 @@
+
+packages:
+  rtl_433: github://juanboro/esphome-rtl_433-decoder/rtl_433.yaml
+
+spi:
+  clk_pin: GPIO45
+  miso_pin: GPIO47
+  mosi_pin: GPIO46
+  interface: spi3
+
+cc1101:
+  id: cc1101_radio
+  cs_pin: GPIO48
+
+# CC1101 GDO0 wired to one GPIO pin
+remote_transmitter:
+  id: rf_tx
+  pin: GPIO42
+  carrier_duty_percent: 100
+  on_transmit:
+    then:
+      - cc1101.begin_tx: cc1101_radio
+  on_complete:
+    then:
+      - cc1101.begin_rx: cc1101_radio
+
+# CC1101 GDO2 wired to a second GPIO pin
+remote_receiver:
+  id: rf_rx
+  pin: GPIO41
+  #dump: ['raw', 'rc_switch']
+  filter: 250us        # ignore pulses shorter than this
+  idle: 4ms            # end of a transmission
+  tolerance: 25%
+  buffer_size: 2kb
+
+radio_frequency:
+  - platform: ir_rf_proxy
+    name: RF Proxy Transmitter
+    frequency: 433.92MHz
+    remote_transmitter_id: rf_tx
+    on_control:
+      then:
+        - if:
+            condition:
+              lambda: "return x.get_frequency().has_value() && *x.get_frequency() > 0;"
+            then:
+              - cc1101.set_frequency:
+                  id: cc1101_radio
+                  value: !lambda "return *x.get_frequency();"
+  - platform: ir_rf_proxy
+    name: RF Proxy Receiver
+    frequency: 433.92MHz
+    remote_receiver_id: rf_rx
+
+rtl_433:
+  id: rtl433
+  receiver_id: rf_rx
+  on_json_message: 
+    then:
+      - homeassistant.event:
+          event: esphome.rtl_433
+          data:
+            hostname: !lambda |-
+                return App.get_name();
+            message: !lambda |-
+              return std::string(json::build_json([x](JsonObject root) {
+                root.set(x);
+              }));

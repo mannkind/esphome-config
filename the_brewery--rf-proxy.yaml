@@ -1,0 +1,9 @@
+packages:
+  global: !include packages/global.yaml
+  ethernet: !include packages/ethernet.yaml
+  esp32: !include packages/esp32-s3-devkitc.yaml
+  rf-proxy: !include packages/rf-proxy.yaml
+
+substitutions:
+  slug: rf-proxy-bedrooms-poe
+  name: RF Proxy Bedrooms (PoE)

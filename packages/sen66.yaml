@@ -1,0 +1,175 @@
+
+substitutions:
+  sen66_sda: GPIO5  # XIAO ESP32S3 D4
+  sen66_scl: GPIO6  # XIAO ESP32S3 D5
+  sen66_temperature_offset: "-2.33"  # Self-heating inside the enclosure, °C
+  sen66_humidity_trim: "0"           # Residual sensor bias only; self-heating
+                                     # is handled by the Magnus ratio
+
+i2c:
+  id: i2c_bus
+  sda: ${sen66_sda}
+  scl: ${sen66_scl}
+  scan: true
+
+sensor:
+  - platform: sen6x
+    id: sen66
+    type: SEN66
+    i2c_id: i2c_bus
+    update_interval: 10s
+    pm_1_0:
+      name: PM1.0
+      id: sen66_pm_1_0
+      accuracy_decimals: 1
+    pm_2_5:
+      name: PM2.5
+      id: sen66_pm_2_5
+      accuracy_decimals: 1
+    pm_4_0:
+      name: PM4.0
+      id: sen66_pm_4_0
+      accuracy_decimals: 1
+    pm_10_0:
+      name: PM10
+      id: sen66_pm_10_0
+      accuracy_decimals: 1
+    co2:
+      name: CO2
+      id: sen66_co2
+      accuracy_decimals: 0
+    temperature:
+      name: Temperature (Raw)
+      id: sen66_temperature_raw
+      accuracy_decimals: 1
+      entity_category: diagnostic
+    humidity:
+      name: Humidity (Raw)
+      id: sen66_humidity_raw
+      accuracy_decimals: 0
+      entity_category: diagnostic
+    voc_index:
+      name: VOC Index
+      id: sen66_voc
+      filters:
+        - sliding_window_moving_average:
+            window_size: 9
+            send_every: 1
+    nox_index:
+      name: NOx Index
+      id: sen66_nox
+      filters:
+        - sliding_window_moving_average:
+            window_size: 9
+            send_every: 1
+
+  # Enclosure-corrected values; these are the ones to use in HA.
+  - platform: template
+    name: Temperature
+    id: sen66_temperature
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: 10s
+    lambda: |-
+      if (isnan(id(sen66_temperature_raw).state)) {
+        return NAN;
+      }
+      return id(sen66_temperature_raw).state + id(temperature_offset).state;
+
+  - platform: template
+    name: Humidity
+    id: sen66_humidity
+    device_class: humidity
+    state_class: measurement
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 10s
+    lambda: |-
+      const float rh_raw = id(sen66_humidity_raw).state;
+      const float t_raw = id(sen66_temperature_raw).state;
+      if (isnan(rh_raw) || isnan(t_raw)) {
+        return NAN;
+      }
+      const float t_true = t_raw + id(temperature_offset).state;
+      const float a = 17.62f, b = 243.12f;
+      const float ratio = expf((a * t_raw) / (b + t_raw) -
+                               (a * t_true) / (b + t_true));
+      return clamp(rh_raw * ratio + id(humidity_trim).state, 0.0f, 100.0f);
+
+  - platform: template
+    name: TVOC
+    id: sen66_tvoc
+    state_class: measurement
+    unit_of_measurement: "mg/m³"
+    accuracy_decimals: 2
+    update_interval: 10s
+    lambda: |-
+      if (isnan(id(sen66_voc).state)) {
+        return NAN;
+      }
+      return ((log(501.0f - id(sen66_voc).state) - 6.24f) * -996.94f) * 0.001f;
+
+  - platform: template
+    name: IAQ Index
+    id: sen66_iaq_index
+    state_class: measurement
+    unit_of_measurement: IAQ
+    accuracy_decimals: 0
+    update_interval: 10s
+    lambda: |-
+      float iaq = 100.0f;
+
+      float co2 = id(sen66_co2).state;
+      if (!isnan(co2) && co2 > 1500.0f) {
+        iaq += (co2 - 1500.0f) / 5.0f;
+      }
+
+      float tvoc = id(sen66_tvoc).state;
+      if (!isnan(tvoc) && tvoc > 0.25f) {
+        iaq += (tvoc - 0.25f) * 100.0f;
+      }
+
+      float pm_2_5 = id(sen66_pm_2_5).state;
+      if (!isnan(pm_2_5) && pm_2_5 > 10.0f) {
+        iaq += (pm_2_5 - 10.0f) * 2.0f;
+      }
+
+      float pm_10_0 = id(sen66_pm_10_0).state;
+      if (!isnan(pm_10_0) && pm_10_0 > 20.0f) {
+        iaq += (pm_10_0 - 20.0f) * 2.0f;
+      }
+
+      return clamp(iaq, 100.0f, 400.0f);
+    filters:
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 1
+
+number:
+  - platform: template
+    name: Temperature Offset
+    id: temperature_offset
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: ${sen66_temperature_offset}
+    min_value: -10.0
+    max_value: 10.0
+    step: 0.05
+    unit_of_measurement: "°C"
+    mode: box
+
+  - platform: template
+    name: Humidity Trim
+    id: humidity_trim
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: ${sen66_humidity_trim}
+    min_value: -10.0
+    max_value: 10.0
+    step: 0.1
+    unit_of_measurement: "%"
+    mode: box

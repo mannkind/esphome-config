@@ -1,0 +1,86 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/coast-wifi.yaml
+  esp8266: !include packages/esp8266-esp12e.yaml
+
+substitutions:
+  slug: coast-air-conditioner
+  name: "Coast Air Conditioner"
+  visual_min_temperature: "17 °C"
+  visual_max_temperature: "30 °C"
+  visual_temperature_step: "1.0 °C"
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - climate.control:
+            id: midea_climate
+            fan_mode: AUTO
+
+# Enable logging
+logger:
+  baud_rate: 0
+
+uart:
+  tx_pin: 12
+  rx_pin: 14
+  baud_rate: 9600
+
+button:
+  - platform: factory_reset
+    id: factory_reset_btn
+    name: Factory reset
+    entity_category: diagnostic
+
+# "Power toggle" button
+  - platform: template
+    name: Power Toggle
+    id: midea_power_toggle
+    icon: mdi:power
+    on_press:
+      midea_ac.power_toggle:
+
+climate:
+  - platform: midea
+    name: None
+    id: midea_climate
+    period: 1s
+    timeout: 2s
+    num_attempts: 3
+    autoconf: true
+    beeper: true
+    visual:
+      min_temperature: "${visual_min_temperature}"
+      max_temperature: "${visual_max_temperature}"
+      temperature_step: "${visual_temperature_step}"
+    outdoor_temperature:
+      name: Outdoor Temperature
+    power_usage:
+      name: Power Usage
+    humidity_setpoint:
+      name: Indoor Humidity
+
+switch:
+  - platform: template
+    name: Beeper
+    id: midea_beeper
+    icon: mdi:volume-source
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
+    turn_on_action:
+      midea_ac.beeper_on:
+    turn_off_action:
+      midea_ac.beeper_off:
+
+sensor:
+  - platform: template
+    name: Current Temperature
+    id: midea_current_temperature
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 30s
+    lambda: |-
+      return id(midea_climate).current_temperature;
