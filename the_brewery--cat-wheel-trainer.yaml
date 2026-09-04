@@ -1,0 +1,195 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/wifi.yaml
+  esp32: !include packages/esp32-d1_mini32.yaml
+  cat_wheel_globals: !include packages/cat-wheel/globals.yaml
+  cat_wheel_sensors: !include packages/cat-wheel/sensors.yaml
+  cat_wheel_metrics: !include packages/cat-wheel/metrics.yaml
+  cat_wheel_status: !include packages/cat-wheel/status.yaml
+  cat_wheel_controls: !include packages/cat-wheel/controls.yaml
+  cat_wheel_logic: !include packages/cat-wheel/logic.yaml
+  cat_wheel_diagnostics: !include packages/cat-wheel/diagnostics.yaml
+
+substitutions:
+  slug: cat-wheel-trainer
+  name: Cat Wheel Trainer
+
+  sensor_rotation_filter_ms: "2"
+
+  park_present_duty_percent: "55"
+
+  # Window over which pulses are counted and duty is measured.
+  rotation_sample_interval: "1s"
+
+  sensor_update_fast: "1s"
+  sensor_update_medium: "2s"
+  sensor_update_slow: "10s"
+
+  default_distance_threshold: "150"
+  default_growth_factor: "1.2"
+  default_max_multiplier: "20"
+  default_hall_distance_cm: "22.5"   # 383cm circumference / 17 magnets
+  default_stepper_steps: "1600"      # half turn at 1/16 microstepping
+  default_inactivity_ms: "300000"    # 5 minutes
+
+  min_distance_threshold: "50"
+  max_distance_threshold: "5000"
+  min_growth_factor: "1.0"           # 1.0 = deliberately flat interval
+  max_growth_factor: "3.0"
+  min_max_multiplier: "2"
+  max_max_multiplier: "100"
+  min_hall_distance_cm: "10"
+  max_hall_distance_cm: "50"
+  min_stepper_steps: "10"
+  max_stepper_steps: "3200"
+  min_inactivity_s: "60"
+  max_inactivity_s: "1800"
+
+  default_quiet_start_hour: "22"
+  default_quiet_start_minute: "0"
+  default_quiet_end_hour: "7"
+  default_quiet_end_minute: "0"
+  default_quiet_start: "22:00:00"
+  default_quiet_end: "07:00:00"
+
+esphome:
+  on_boot:
+    priority: -100
+    then:
+      - logger.log:
+          format: "Cat Wheel Trainer starting up..."
+          level: INFO
+      - lambda: |-
+          ESP_LOGI("BOOT", "Syncing configuration values from flash...");
+
+          if (id(inactivity_reset_time) < ${min_inactivity_s} * 1000UL ||
+              id(inactivity_reset_time) > ${max_inactivity_s} * 1000UL) {
+            ESP_LOGW("BOOT", "Invalid inactivity_reset_time (%lu), using default %lu ms",
+                     id(inactivity_reset_time), (unsigned long) ${default_inactivity_ms});
+            id(inactivity_reset_time) = ${default_inactivity_ms};
+          }
+
+          if (id(distance_threshold) < ${min_distance_threshold} ||
+              id(distance_threshold) > ${max_distance_threshold}) {
+            ESP_LOGW("BOOT", "Invalid distance_threshold (%d), using default %d cm",
+                     id(distance_threshold), ${default_distance_threshold});
+            id(distance_threshold) = ${default_distance_threshold};
+          }
+
+          if (id(treat_interval_growth_factor) < ${min_growth_factor} ||
+              id(treat_interval_growth_factor) > ${max_growth_factor}) {
+            ESP_LOGW("BOOT", "Invalid treat_interval_growth_factor (%.2f), using default %.2f",
+                     id(treat_interval_growth_factor), (float) ${default_growth_factor});
+            id(treat_interval_growth_factor) = ${default_growth_factor};
+          }
+
+          if (id(max_treat_interval_multiplier) < ${min_max_multiplier} ||
+              id(max_treat_interval_multiplier) > ${max_max_multiplier}) {
+            ESP_LOGW("BOOT", "Invalid max_treat_interval_multiplier (%d), using default %d",
+                     id(max_treat_interval_multiplier), ${default_max_multiplier});
+            id(max_treat_interval_multiplier) = ${default_max_multiplier};
+          }
+
+          if (id(hall_distance_cm) < ${min_hall_distance_cm} ||
+              id(hall_distance_cm) > ${max_hall_distance_cm}) {
+            ESP_LOGW("BOOT", "Invalid hall_distance_cm (%.1f), using default %.1f cm",
+                     id(hall_distance_cm), (float) ${default_hall_distance_cm});
+            id(hall_distance_cm) = ${default_hall_distance_cm};
+          }
+
+          if (id(stepper_steps_per_dispense) < ${min_stepper_steps} ||
+              id(stepper_steps_per_dispense) > ${max_stepper_steps}) {
+            ESP_LOGW("BOOT", "Invalid stepper_steps_per_dispense (%d), using default %d",
+                     id(stepper_steps_per_dispense), ${default_stepper_steps});
+            id(stepper_steps_per_dispense) = ${default_stepper_steps};
+          }
+
+          // Session state validation
+          if (id(treat_interval) < 1.0f ||
+              id(treat_interval) > (float) id(max_treat_interval_multiplier)) {
+            ESP_LOGW("BOOT", "Invalid treat_interval (%.2f), resetting to 1.0",
+                     id(treat_interval));
+            id(treat_interval) = 1.0f;
+          }
+
+          {
+            const int max_magnets = (int) ceilf(
+                (float) id(distance_threshold) *
+                (float) id(max_treat_interval_multiplier) /
+                id(hall_distance_cm));
+            if (id(magnet_detected_count) < 0 || id(magnet_detected_count) > max_magnets) {
+              ESP_LOGW("BOOT", "Invalid magnet_detected_count (%d, max %d), resetting to 0",
+                       id(magnet_detected_count), max_magnets);
+              id(magnet_detected_count) = 0;
+            }
+          }
+
+          // Quiet hours configuration validation
+          if (id(quiet_hours_start_hour) < 0 || id(quiet_hours_start_hour) > 23) {
+            ESP_LOGW("BOOT", "Invalid quiet_hours_start_hour (%d), using default %d",
+                     id(quiet_hours_start_hour), ${default_quiet_start_hour});
+            id(quiet_hours_start_hour) = ${default_quiet_start_hour};
+          }
+
+          if (id(quiet_hours_start_minute) < 0 || id(quiet_hours_start_minute) > 59) {
+            ESP_LOGW("BOOT", "Invalid quiet_hours_start_minute (%d), using default %d",
+                     id(quiet_hours_start_minute), ${default_quiet_start_minute});
+            id(quiet_hours_start_minute) = ${default_quiet_start_minute};
+          }
+
+          if (id(quiet_hours_end_hour) < 0 || id(quiet_hours_end_hour) > 23) {
+            ESP_LOGW("BOOT", "Invalid quiet_hours_end_hour (%d), using default %d",
+                     id(quiet_hours_end_hour), ${default_quiet_end_hour});
+            id(quiet_hours_end_hour) = ${default_quiet_end_hour};
+          }
+
+          if (id(quiet_hours_end_minute) < 0 || id(quiet_hours_end_minute) > 59) {
+            ESP_LOGW("BOOT", "Invalid quiet_hours_end_minute (%d), using default %d",
+                     id(quiet_hours_end_minute), ${default_quiet_end_minute});
+            id(quiet_hours_end_minute) = ${default_quiet_end_minute};
+          }
+
+          id(inactivity_reset_time_number).publish_state(id(inactivity_reset_time) / 1000.0);
+          id(distance_threshold_number).publish_state(id(distance_threshold));
+          id(treat_interval_growth_factor_number).publish_state(id(treat_interval_growth_factor));
+          id(max_treat_interval_multiplier_number).publish_state(id(max_treat_interval_multiplier));
+          id(hall_effect_distance_number).publish_state(id(hall_distance_cm));
+          id(stepper_steps_number).publish_state(id(stepper_steps_per_dispense));
+
+          // Sync quiet hours datetime components from persisted globals
+          id(quiet_hours_start_time)
+              ->make_call()
+              .set_time(id(quiet_hours_start_hour), id(quiet_hours_start_minute), 0)
+              .perform();
+          id(quiet_hours_end_time)
+              ->make_call()
+              .set_time(id(quiet_hours_end_hour), id(quiet_hours_end_minute), 0)
+              .perform();
+
+          // Anchor the first rotation sample window.
+          id(window_start_time) = millis();
+
+          ESP_LOGI("BOOT", "Configuration validation complete");
+          ESP_LOGI("BOOT", "  Inactivity timeout: %lu ms", id(inactivity_reset_time));
+          ESP_LOGI("BOOT", "  Distance threshold: %d cm", id(distance_threshold));
+          ESP_LOGI("BOOT", "  Distance per magnet: %.1f cm", id(hall_distance_cm));
+          ESP_LOGI("BOOT", "  Growth factor: %.2f", id(treat_interval_growth_factor));
+          ESP_LOGI("BOOT", "  Max interval: %d", id(max_treat_interval_multiplier));
+          ESP_LOGI("BOOT", "  Stepper steps per dispense: %d", id(stepper_steps_per_dispense));
+          ESP_LOGI("BOOT", "  Park present-duty threshold: %.0f%%", (float) ${park_present_duty_percent});
+          ESP_LOGI("BOOT", "  Quiet hours: %02d:%02d - %02d:%02d",
+                   id(quiet_hours_start_hour), id(quiet_hours_start_minute),
+                   id(quiet_hours_end_hour), id(quiet_hours_end_minute));
+
+          // Log restored session state
+          if (id(treat_interval) > 1.0f || id(magnet_detected_count) > 0) {
+            ESP_LOGI("BOOT", "SESSION RESUMED from reboot:");
+            ESP_LOGI("BOOT", "  Training interval: %.2f (next treat at %.0f cm)",
+                     id(treat_interval),
+                     id(distance_threshold) * id(treat_interval));
+            ESP_LOGI("BOOT", "  Partial progress: %d magnets (%.0f cm toward next treat)",
+                     id(magnet_detected_count),
+                     id(magnet_detected_count) * id(hall_distance_cm));
+          } else {
+            ESP_LOGI("BOOT", "Starting fresh training session (interval=1.0, progress=0)");
+          }

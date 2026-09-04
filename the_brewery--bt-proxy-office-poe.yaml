@@ -1,0 +1,9 @@
+packages:
+  global: !include packages/global.yaml
+  ethernet: !include packages/ethernet.yaml
+  esp32: !include packages/esp32-s3-devkitc.yaml
+  bt-proxy: !include packages/bt-proxy.yaml
+
+substitutions:
+  slug: bt-proxy-office-poe
+  name: Bluetooth Proxy Office (PoE)

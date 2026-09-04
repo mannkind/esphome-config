@@ -1,0 +1,466 @@
+packages:
+  global: !include packages/global.yaml
+  wifi: !include packages/coast-wifi.yaml
+  esp32: !include packages/esp32-c3-devkitc.yaml
+
+external_components:
+  - source: github://mguaylam/esphome-gea
+    components: [gea]
+
+substitutions:
+  slug: coast-waterheater
+  name: Coast Water Heater
+
+esphome:
+  name: ${slug}
+  platformio_options:
+    board_build.flash_mode: dio
+  on_boot:
+    - priority: 800
+      then:
+        - light.turn_off: led1
+
+logger:
+  baud_rate: 0 
+
+uart:
+  id: uart_gea
+  tx_pin: 
+    number: GPIO5
+    inverted: true
+  rx_pin: 
+    number: GPIO10
+    inverted: true
+  baud_rate: 19200
+
+gea:
+  id: gea_hub
+  uart_id: uart_gea
+  protocol: gea2  
+  src_address: 0xBB
+  dest_address: 0x60
+  erd_lookup: true
+
+.temperature_sensor: &temperature_sensor
+  platform: gea
+  gea_id: gea_hub
+  decode: int16_be
+  multiplier: 0.1
+  accuracy_decimals: 1
+  unit_of_measurement: "°F"
+  device_class: temperature
+
+sensor:
+  - <<: *temperature_sensor
+    id: tank_temperature
+    name: "Tank Temperature"
+    erd: 0x4060
+
+  - <<: *temperature_sensor
+    name: "Upper Tank Temp (T1)"
+    erd: 0x405F
+
+  - <<: *temperature_sensor
+    name: "Mid Tank Temp (T3a)"
+    erd: 0x4061
+
+  - <<: *temperature_sensor
+    name: "Mid Tank Temp (T3b)"
+    erd: 0x4062
+
+  - <<: *temperature_sensor
+    name: "Lower Tank Temp (T4)"
+    erd: 0x4063
+
+  - <<: *temperature_sensor
+    name: "Evaporator Temp (T6)"
+    erd: 0x406E
+    filters:
+      - filter_out: -0.1
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Measured Current"
+    erd: 0x4065
+    decode: uint16_be
+    multiplier: 0.1
+    accuracy_decimals: 1
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Measured Voltage"
+    erd: 0x4066
+    decode: uint16_be
+    accuracy_decimals: 0
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+
+  - platform: gea
+    gea_id: gea_hub
+    id: current_power
+    name: "Current Power"
+    erd: 0xD007
+    decode: uint16_be
+    accuracy_decimals: 0
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+
+  - platform: total_daily_energy
+    name: "Total Daily Energy"
+    power_id: current_power
+    unit_of_measurement: "kWh"
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    filters:
+      - multiply: 0.001
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Wireless Connection State"
+    erd: 0x6003
+    decode: uint8
+    accuracy_decimals: 0
+    entity_category: diagnostic
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Timed Mode Hours Remaining"
+    erd: 0x4028
+    decode: uint16_be
+    unit_of_measurement: "h"
+
+  - <<: *temperature_sensor
+    name: "Ambient Temperature"
+    erd: 0x4064
+
+  - <<: *temperature_sensor
+    name: "Actual Setpoint"
+    erd: 0x4026
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Max Vacation Hours"
+    erd: 0x4049
+    decode: uint16_be
+    unit_of_measurement: "h"
+    entity_category: diagnostic
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Max Electric (Only) Hours"
+    erd: 0x404A
+    decode: uint16_be
+    unit_of_measurement: "h"
+    entity_category: diagnostic
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Min Allowed Setpoint"
+    erd: 0x4047
+    byte_offset: 0
+    decode: uint16_be
+    multiplier: 0.1
+    accuracy_decimals: 1
+    unit_of_measurement: "°F"
+    device_class: temperature
+    entity_category: diagnostic
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Max Allowed Setpoint"
+    erd: 0x4047
+    byte_offset: 2
+    decode: uint16_be
+    multiplier: 0.1
+    accuracy_decimals: 1
+    unit_of_measurement: "°F"
+    device_class: temperature
+    entity_category: diagnostic
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Heating Issue (raw)"
+    erd: 0x4058
+    decode: uint16_be
+    accuracy_decimals: 0
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: gea
+    gea_id: gea_hub
+    name: ${name} Model
+    entity_category: "diagnostic"
+    erd: 0x0001
+    decode: ascii
+
+  - platform: gea
+    gea_id: gea_hub
+    name: ${name} Serial
+    entity_category: "diagnostic"
+    erd: 0x0002
+    decode: ascii
+
+globals:
+  - id: wh_last_mode
+    type: int
+    restore_value: no
+    initial_value: '-1'
+
+select:
+  - platform: gea
+    gea_id: gea_hub
+    id: wh_mode_select
+    name: "Operating Mode"
+    erd: 0x4020
+    decode: uint8
+    options:
+      0: "Hybrid Standard"
+      1: "Electric (Only)"
+      2: "Heat Pump (Only)"
+      3: "Hybrid Plus"
+      4: "Vacation"
+    on_value:
+      - lambda: |-
+          int m = (x == "Electric (Only)") ? 1 : (x == "Vacation") ? 4 : 0;
+          if (m == id(wh_last_mode))
+            return;
+          id(wh_last_mode) = m;
+          if (m == 1)
+            id(electric_hours_write).press();
+          else if (m == 4)
+            id(vacation_hours_write).press();
+
+button:
+  - platform: gea
+    gea_id: gea_hub
+    name: "Vacation Hours Write"
+    id: vacation_hours_write
+    internal: true
+    erd: 0x4028
+    payload: [0x12, 0xA8]
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Electric Hours Write"
+    id: electric_hours_write
+    internal: true
+    erd: 0x4028
+    payload: [0x09, 0x48]
+
+number:
+  - platform: gea
+    gea_id: gea_hub
+    id: wh_setpoint
+    name: "Setpoint"
+    erd: 0x4024
+    decode: int16_be
+    multiplier: 0.1
+    min_value: 100
+    max_value: 140
+    step: 1
+    unit_of_measurement: "°F"
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Vacation Setpoint"
+    erd: 0x4025
+    decode: int16_be
+    multiplier: 0.1
+    min_value: 50
+    max_value: 140
+    step: 1
+    unit_of_measurement: "°F"
+
+water_heater:
+  - platform: template
+    name: "Water Heater"
+    id: coast_water_heater
+    optimistic: true
+    visual:
+      min_temperature: 37.78
+      max_temperature: 60
+      target_temperature_step: 0.5556
+    supported_modes:
+      - ECO          # Hybrid Standard
+      - HEAT_PUMP    # Heat Pump (Only)
+      - ELECTRIC     # Electric (Only)
+      - HIGH_DEMAND  # Hybrid Plus
+    current_temperature: !lambda 'return (id(tank_temperature).state - 32.0f) / 1.8f;'
+    target_temperature: !lambda 'return (id(wh_setpoint).state - 32.0f) / 1.8f;'
+    mode: !lambda |-
+      auto s = id(wh_mode_select).current_option();
+      if (s == "Heat Pump (Only)") return water_heater::WATER_HEATER_MODE_HEAT_PUMP;
+      if (s == "Electric (Only)")  return water_heater::WATER_HEATER_MODE_ELECTRIC;
+      if (s == "Hybrid Plus")      return water_heater::WATER_HEATER_MODE_HIGH_DEMAND;
+      // Hybrid Standard, and Vacation (surfaced via away) fall back to ECO
+      return water_heater::WATER_HEATER_MODE_ECO;
+    away: !lambda 'return id(wh_mode_select).current_option() == "Vacation";'
+    is_on: !lambda 'return id(heating_active).state;'
+    set_action:
+      - lambda: |-
+          float target_f = id(coast_water_heater).get_target_temperature() * 1.8f + 32.0f;
+          id(wh_setpoint).make_call().set_value(target_f).perform();
+
+          // Mode / away -> existing Operating Mode select (reuses timed-mode automation)
+          std::string opt;
+          if (id(coast_water_heater).is_away()) {
+            opt = "Vacation";
+          } else {
+            switch (id(coast_water_heater).get_mode()) {
+              case water_heater::WATER_HEATER_MODE_HEAT_PUMP:   opt = "Heat Pump (Only)"; break;
+              case water_heater::WATER_HEATER_MODE_ELECTRIC:    opt = "Electric (Only)"; break;
+              case water_heater::WATER_HEATER_MODE_HIGH_DEMAND: opt = "Hybrid Plus"; break;
+              default:                                          opt = "Hybrid Standard"; break;
+            }
+          }
+          id(wh_mode_select).make_call().set_option(opt).perform();
+
+binary_sensor:
+  - platform: template
+    name: "GEA Bus Connected"
+    entity_category: "diagnostic"
+    lambda: 'return id(gea_hub).is_bus_connected();'
+
+  - platform: gea
+    gea_id: gea_hub
+    id: compressor_on
+    name: "Compressor"
+    erd: 0x4068
+    byte_offset: 1
+    bitmask: 0x02
+    device_class: running
+    entity_category: diagnostic
+
+  - platform: gea
+    gea_id: gea_hub
+    id: upper_element_on
+    name: "Upper Element"
+    erd: 0x4068
+    byte_offset: 1
+    bitmask: 0x04
+    device_class: running
+    entity_category: diagnostic
+
+  - platform: gea
+    gea_id: gea_hub
+    id: lower_element_on
+    name: "Lower Element"
+    erd: 0x4068
+    byte_offset: 1
+    bitmask: 0x08
+    device_class: running
+    entity_category: diagnostic
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Fan"
+    erd: 0x4068
+    byte_offset: 1
+    bitmask: 0x10
+    device_class: running
+    entity_category: diagnostic
+
+  - platform: template
+    id: heating_active
+    name: "Heating Active"
+    device_class: running
+    lambda: 'return id(compressor_on).state || id(upper_element_on).state || id(lower_element_on).state;'
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Accessory Low Battery"
+    erd: 0x4082
+    device_class: battery
+    entity_category: "diagnostic"
+
+  - platform: gea
+    gea_id: gea_hub
+    name: "Leak Detected"
+    erd: 0x4083
+    device_class: moisture
+       
+output:
+  - platform: ledc
+    pin:
+      number: 2
+      inverted: true
+      ignore_strapping_warning: true
+    id: led1_output
+    max_power: 0.03
+
+  - platform: ledc
+    max_power: 0.03
+    pin: 
+      number: 3
+      inverted: false
+    id: led2_output
+
+  # GPIO4: Output for Yellow LED, acive high
+  - platform: ledc
+    pin:
+      number: 4
+      inverted: false
+    id: led3_output
+    max_power: 0.06
+
+light:
+  - platform: monochromatic
+    name: "Red LED"
+    output: led1_output
+    id: led1
+    restore_mode: ALWAYS_OFF
+
+  - platform: monochromatic
+    name: "Green LED"
+    output: led2_output
+    id: led2
+    restore_mode: ALWAYS_OFF
+
+  - platform: monochromatic
+    name: "Yellow LED"
+    output: led3_output
+    id: led3
+    restore_mode: ALWAYS_OFF
+
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            if:
+              condition:
+                light.is_off: led2
+              then:
+                - light.turn_on: led2
+          else:
+            if:
+              condition:
+                light.is_on: led2
+              then:
+                - light.turn_off: led2
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(gea_hub).is_bus_connected();
+          then:
+            if:
+              condition:
+                light.is_off: led3
+              then:
+                - light.turn_on: led3
+          else:
+            if:
+              condition:
+                light.is_on: led3
+              then:
+                - light.turn_off: led3

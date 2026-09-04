@@ -1,0 +1,136 @@
+globals:
+
+  - id: system_state
+    type: int
+    restore_value: no
+    initial_value: "0"  # IDLE
+
+  - id: dispense_start_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  - id: magnet_detected_count
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+  - id: treat_interval
+    type: float
+    restore_value: yes
+    initial_value: "1.0"
+
+  - id: last_activity_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  - id: last_wheel_rotation_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  - id: magnet_present_since
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  - id: window_present_ms
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  - id: window_start_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  - id: window_present_duty
+    type: float
+    restore_value: no
+    initial_value: "0.0"
+
+  - id: last_pulse_total
+    type: float
+    restore_value: no
+    initial_value: "-1.0"
+
+  - id: suppressed_park_count
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+  - id: session_start_time
+    type: unsigned long
+    restore_value: no
+    initial_value: "0"
+
+  - id: is_quiet_hour
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+  - id: hall_distance_cm
+    type: float
+    restore_value: yes
+    initial_value: "${default_hall_distance_cm}"
+
+  - id: distance_accum_frac
+    type: float
+    restore_value: no
+    initial_value: "0.0"
+
+  - id: distance_threshold
+    type: int
+    restore_value: yes
+    initial_value: "${default_distance_threshold}"
+
+  - id: treat_interval_growth_factor
+    type: float
+    restore_value: yes
+    initial_value: "${default_growth_factor}"
+
+  - id: max_treat_interval_multiplier
+    type: int
+    restore_value: yes
+    initial_value: "${default_max_multiplier}"
+
+  - id: inactivity_reset_time
+    type: unsigned long
+    restore_value: yes
+    initial_value: "${default_inactivity_ms}"
+
+  - id: stepper_steps_per_dispense
+    type: int
+    restore_value: yes
+    initial_value: "${default_stepper_steps}"
+
+  - id: quiet_hours_start_hour
+    type: int
+    restore_value: yes
+    initial_value: "${default_quiet_start_hour}"
+
+  - id: quiet_hours_start_minute
+    type: int
+    restore_value: yes
+    initial_value: "${default_quiet_start_minute}"
+
+  - id: quiet_hours_end_hour
+    type: int
+    restore_value: yes
+    initial_value: "${default_quiet_end_hour}"
+
+  - id: quiet_hours_end_minute
+    type: int
+    restore_value: yes
+    initial_value: "${default_quiet_end_minute}"
+
+  - id: total_distance
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+  - id: total_treats_dispensed
+    type: int
+    restore_value: yes
+    initial_value: "0"

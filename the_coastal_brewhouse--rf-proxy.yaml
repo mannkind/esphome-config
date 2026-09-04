@@ -1,0 +1,149 @@
+packages:
+  global: !include packages/global.yaml
+  ethernet: !include packages/ethernet.yaml
+  esp32: !include packages/esp32-s3-devkitc.yaml
+  bt-proxy: !include packages/rf-proxy.yaml
+
+substitutions:
+  slug: coast-rf-proxy
+  name: Coast RF Proxy (PoE)
+
+script:
+  - id: rf_low
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:   # Fan Low  (100110110000001100111011 = 0x9B033B)
+          code: [
+            5650, -7150, 630, -370, 265, -735, 265, -735, 630, -370, 630, -370, 265, -735, 630, -370, 630,
+            -370, 265, -735, 265, -735, 265, -735, 265, -735, 265, -735, 265, -735, 630, -370, 630, -370,
+            265, -735, 265, -735, 630, -370, 630, -370, 630, -370, 265, -735, 630, -370, 630, -370, 265
+          ]
+          repeat:
+            times: 6
+            wait_time: 7180us
+  - id: rf_med
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:   # Fan Medium  (100111110000010000111101 = 0x9F043D)
+          code: [
+            5650, -7150, 630, -370, 265, -735, 265, -735, 630, -370, 630, -370, 630, -370, 630, -370, 630,
+            -370, 265, -735, 265, -735, 265, -735, 265, -735, 265, -735, 630, -370, 265, -735, 265, -735,
+            265, -735, 265, -735, 630, -370, 630, -370, 630, -370, 630, -370, 265, -735, 630, -370, 265
+          ]
+          repeat:
+            times: 6
+            wait_time: 7180us
+  - id: rf_high
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:   # Fan High  (101001100011110000001010 = 0xA63C0A)
+          code: [
+            5650, -7150, 630, -370, 265, -735, 630, -370, 265, -735, 265, -735, 630, -370, 630, -370, 265,
+            -735, 265, -735, 265, -735, 630, -370, 630, -370, 630, -370, 630, -370, 265, -735, 265, -735,
+            265, -735, 265, -735, 265, -735, 265, -735, 630, -370, 265, -735, 630, -370, 265, -735, 265
+          ]
+          repeat:
+            times: 6
+            wait_time: 7180us
+  - id: rf_stop
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:   # Fan Stop  (100111000000011000111110 = 0x9C063E)
+          code: [
+            5650, -7150, 630, -370, 265, -735, 265, -735, 630, -370, 630, -370, 630, -370, 265, -735, 265,
+            -735, 265, -735, 265, -735, 265, -735, 265, -735, 265, -735, 630, -370, 630, -370, 265, -735,
+            265, -735, 265, -735, 630, -370, 630, -370, 630, -370, 630, -370, 630, -370, 265, -735, 265
+          ]
+          repeat:
+            times: 6
+            wait_time: 7180us
+  - id: rf_light
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:   # Light (toggle)  (100111100000010100111100 = 0x9E053C)
+          code: [
+            5650, -7150, 630, -370, 265, -735, 265, -735, 630, -370, 630, -370, 630, -370, 630, -370, 265,
+            -735, 265, -735, 265, -735, 265, -735, 265, -735, 265, -735, 630, -370, 265, -735, 630, -370,
+            265, -735, 265, -735, 630, -370, 630, -370, 630, -370, 630, -370, 265, -735, 265, -735, 265
+          ]
+          repeat:
+            times: 6
+            wait_time: 7180us
+  - id: rf_1h
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:   # Timer 1H  (100100110000101100110111 = 0x930B37)
+          code: [
+            5650, -7150, 630, -370, 265, -735, 265, -735, 630, -370, 265, -735, 265, -735, 630, -370, 630,
+            -370, 265, -735, 265, -735, 265, -735, 265, -735, 630, -370, 265, -735, 630, -370, 630, -370,
+            265, -735, 265, -735, 630, -370, 630, -370, 265, -735, 630, -370, 630, -370, 630, -370, 265
+          ]
+          repeat:
+            times: 6
+            wait_time: 7180us
+  - id: rf_2h
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:   # Timer 2H  (100100100000101000110110 = 0x920A36)
+          code: [
+            5650, -7150, 630, -370, 265, -735, 265, -735, 630, -370, 265, -735, 265, -735, 630, -370, 265,
+            -735, 265, -735, 265, -735, 265, -735, 265, -735, 630, -370, 265, -735, 630, -370, 265, -735,
+            265, -735, 265, -735, 630, -370, 630, -370, 265, -735, 630, -370, 630, -370, 265, -735, 265
+          ]
+          repeat:
+            times: 6
+            wait_time: 7180us
+  - id: rf_4h
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:   # Timer 4H  (101111010010011100011111 = 0xBD271F)
+          code: [
+            5650, -7150, 630, -370, 265, -735, 630, -370, 630, -370, 630, -370, 630, -370, 265, -735, 630,
+            -370, 265, -735, 265, -735, 630, -370, 265, -735, 265, -735, 630, -370, 630, -370, 630, -370,
+            265, -735, 265, -735, 265, -735, 630, -370, 630, -370, 630, -370, 630, -370, 630, -370, 265
+          ]
+          repeat:
+            times: 6
+            wait_time: 7180us
+  - id: rf_8h
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:   # Timer 8H  (101100110010101100010111 = 0xB32B17)
+          code: [
+            5650, -7150, 630, -370, 265, -735, 630, -370, 630, -370, 265, -735, 265, -735, 630, -370, 630,
+            -370, 265, -735, 265, -735, 630, -370, 265, -735, 630, -370, 265, -735, 630, -370, 630, -370,
+            265, -735, 265, -735, 265, -735, 630, -370, 265, -735, 630, -370, 630, -370, 630, -370, 265
+          ]
+          repeat:
+            times: 6
+            wait_time: 7180us
+
+fan:
+  - platform: template
+    name: "Ceiling Fan"
+    id: ceiling_fan
+    speed_count: 3
+    on_state:
+      then:
+        - lambda: |-
+            if (!id(ceiling_fan).state)          id(rf_stop).execute();
+            else if (id(ceiling_fan).speed == 1) id(rf_low).execute();
+            else if (id(ceiling_fan).speed == 2) id(rf_med).execute();
+            else                                 id(rf_high).execute();
+
+button:
+  - platform: template
+    name: "Fan Light"
+    on_press: {then: [script.execute: rf_light]}
+  - platform: template
+    name: "Fan Timer 1H"
+    on_press: {then: [script.execute: rf_1h]}
+  - platform: template
+    name: "Fan Timer 2H"
+    on_press: {then: [script.execute: rf_2h]}
+  - platform: template
+    name: "Fan Timer 4H"
+    on_press: {then: [script.execute: rf_4h]}
+  - platform: template
+    name: "Fan Timer 8H"
+    on_press: {then: [script.execute: rf_8h]}

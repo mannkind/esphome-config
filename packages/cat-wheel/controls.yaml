@@ -1,0 +1,193 @@
+stepper:
+  - platform: a4988
+    id: treat_stepper
+    step_pin: GPIO21
+    dir_pin: GPIO17
+    sleep_pin: GPIO16
+    max_speed: 500 steps/s
+    acceleration: 1000 steps/s^2
+    deceleration: 1000 steps/s^2
+
+number:
+  # Stepper steps per dispense
+  - platform: template
+    name: "Stepper - Steps Per Dispense"
+    id: stepper_steps_number
+    min_value: ${min_stepper_steps}
+    max_value: ${max_stepper_steps}
+    step: 10
+    optimistic: true
+    unit_of_measurement: "steps"
+    entity_category: config
+    on_value:
+      - lambda: |-
+          int new_steps = (int)x;
+          if (new_steps < ${min_stepper_steps} || new_steps > ${max_stepper_steps}) {
+            ESP_LOGW("[CONFIG]", "Invalid steps per dispense: %d, ignoring", new_steps);
+            return;
+          }
+          ESP_LOGI("[CONFIG]", "Stepper steps per dispense changed to: %d", new_steps);
+          id(stepper_steps_per_dispense) = new_steps;
+
+  # Distance threshold with validation
+  - platform: template
+    name: "Treat - Distance Threshold"
+    id: distance_threshold_number
+    min_value: ${min_distance_threshold}
+    max_value: ${max_distance_threshold}
+    step: 10
+    optimistic: true
+    unit_of_measurement: "cm"
+    entity_category: config
+    on_value:
+      - lambda: |-
+          int new_threshold = (int)x;
+          if (new_threshold < ${min_distance_threshold} || new_threshold > ${max_distance_threshold}) {
+            ESP_LOGW("[CONFIG]", "Invalid distance threshold: %d cm, ignoring", new_threshold);
+            return;
+          }
+          ESP_LOGI("[CONFIG]", "Distance threshold changed to: %d cm", new_threshold);
+          id(distance_threshold) = new_threshold;
+
+  # Growth factor for progressive treat intervals
+  - platform: template
+    name: "Treat - Interval Growth Factor"
+    id: treat_interval_growth_factor_number
+    min_value: ${min_growth_factor}
+    max_value: ${max_growth_factor}
+    step: 0.05
+    optimistic: true
+    entity_category: config
+    on_value:
+      - lambda: |-
+          if (x < ${min_growth_factor} || x > ${max_growth_factor}) {
+            ESP_LOGW("[CONFIG]", "Invalid growth factor: %.1f, ignoring", x);
+            return;
+          }
+          ESP_LOGI("[CONFIG]", "Treat interval growth factor changed to: %.2f", x);
+          id(treat_interval_growth_factor) = x;
+
+  # Maximum training interval multiplier cap
+  - platform: template
+    name: "Treat - Max Interval Multiplier"
+    id: max_treat_interval_multiplier_number
+    min_value: ${min_max_multiplier}
+    max_value: ${max_max_multiplier}
+    step: 1
+    optimistic: true
+    entity_category: config
+    on_value:
+      - lambda: |-
+          int new_max = (int)x;
+          if (new_max < ${min_max_multiplier} || new_max > ${max_max_multiplier}) {
+            ESP_LOGW("[CONFIG]", "Invalid max interval multiplier: %d, ignoring", new_max);
+            return;
+          }
+          ESP_LOGI("[CONFIG]", "Max treat interval multiplier changed to: %d", new_max);
+          id(max_treat_interval_multiplier) = new_max;
+
+  # Wheel distance per rotation with validation
+  - platform: template
+    name: "Wheel - Distance Per Rotation"
+    id: hall_effect_distance_number
+    min_value: ${min_hall_distance_cm}
+    max_value: ${max_hall_distance_cm}
+    step: 0.5
+    optimistic: true
+    unit_of_measurement: "cm"
+    entity_category: config
+    on_value:
+      - lambda: |-
+          if (x < ${min_hall_distance_cm} || x > ${max_hall_distance_cm}) {
+            ESP_LOGW("[CONFIG]", "Invalid wheel distance: %.1f cm, ignoring", x);
+            return;
+          }
+          ESP_LOGI("[CONFIG]", "Wheel distance per rotation changed to: %.1f cm", x);
+          id(hall_distance_cm) = x;
+
+  # Inactivity reset time with validation
+  - platform: template
+    name: "Inactivity - Reset Time"
+    id: inactivity_reset_time_number
+    min_value: ${min_inactivity_s}
+    max_value: ${max_inactivity_s}
+    step: 30
+    optimistic: true
+    unit_of_measurement: "s"
+    entity_category: config
+    on_value:
+      - lambda: |-
+          int new_time_seconds = (int)x;
+          if (new_time_seconds < ${min_inactivity_s} || new_time_seconds > ${max_inactivity_s}) {
+            ESP_LOGW("[CONFIG]", "Invalid inactivity time: %d seconds, ignoring", new_time_seconds);
+            return;
+          }
+          ESP_LOGI("[CONFIG]", "Inactivity reset time changed to: %d seconds", new_time_seconds);
+          id(inactivity_reset_time) = new_time_seconds * 1000;  // Convert seconds to milliseconds
+
+datetime:
+  - platform: template
+    name: "Quiet Hours - Start Time"
+    id: quiet_hours_start_time
+    type: time
+    optimistic: true
+    entity_category: config
+    # Must match default_quiet_start_hour/minute in the device YAML.
+    initial_value: "${default_quiet_start}"
+    on_value:
+      - lambda: |-
+          ESP_LOGI("[CONFIG]", "Quiet hours start time changed to: %02d:%02d", x.hour, x.minute);
+          id(quiet_hours_start_hour) = x.hour;
+          id(quiet_hours_start_minute) = x.minute;
+      - script.execute: update_quiet_hours_status
+
+  - platform: template
+    name: "Quiet Hours - End Time"
+    id: quiet_hours_end_time
+    type: time
+    optimistic: true
+    entity_category: config
+    # Must match default_quiet_end_hour/minute in the device YAML.
+    initial_value: "${default_quiet_end}"
+    on_value:
+      - lambda: |-
+          ESP_LOGI("[CONFIG]", "Quiet hours end time changed to: %02d:%02d", x.hour, x.minute);
+          id(quiet_hours_end_hour) = x.hour;
+          id(quiet_hours_end_minute) = x.minute;
+      - script.execute: update_quiet_hours_status
+
+button:
+  - platform: template
+    name: "Reset Training Progress"
+    id: reset_training
+    on_press:
+      - script.execute: reset_training_progress
+
+  - platform: template
+    name: "Reset System State"
+    id: reset_system
+    on_press:
+      - script.execute: reset_system_state
+
+  # Manual treat dispense button
+  - platform: template
+    name: "Manual Dispense Treat"
+    id: manual_dispense
+    on_press:
+      - lambda: |-
+          ESP_LOGI("[MANUAL]", "Manual treat dispense requested");
+
+          // Check if currently dispensing
+          if (id(system_state) == 1) {
+            ESP_LOGW("[MANUAL]", "Cannot dispense - already DISPENSING");
+            return;
+          }
+
+          // Check if in quiet hours
+          if (id(is_quiet_hour)) {
+            ESP_LOGW("[MANUAL]", "Manual dispense blocked - quiet hours active");
+            return;
+          }
+
+          ESP_LOGI("[MANUAL]", "Manual dispense authorized - triggering stepper");
+          id(set_state_dispensing).execute();

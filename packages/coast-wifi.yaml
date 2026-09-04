@@ -1,0 +1,5 @@
+wifi:
+  id: wifi_id
+  ssid: !secret coast_wifi_ssid
+  password: !secret coast_wifi_password
+  min_auth_mode: WPA2

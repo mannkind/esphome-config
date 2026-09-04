@@ -1,0 +1,9 @@
+packages:
+  global: !include packages/global.yaml
+  ethernet: !include packages/ranch-wifi.yaml
+  esp32: !include packages/esp32-d1_mini32.yaml
+  bt-proxy: !include packages/bt-proxy.yaml
+
+substitutions:
+  slug: ranch-bluetooth-proxy
+  name: Ranch Bluetooth Proxy (PoE)

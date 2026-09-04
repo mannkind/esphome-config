@@ -1,0 +1,43 @@
+text_sensor:
+  # Quiet hours status with time information
+  - platform: template
+    name: "Quiet Hours - Status"
+    id: quiet_hours_status_sensor
+    entity_category: diagnostic
+    icon: "mdi:volume-off"
+    update_interval: ${sensor_update_slow}
+    lambda: |-
+      auto time = id(sntp_time).now();
+      if (!time.is_valid()) {
+        return std::string("Time Unknown");
+      }
+
+      std::string start_time = to_string(id(quiet_hours_start_hour)) + ":" +
+                               (id(quiet_hours_start_minute) < 10 ? "0" : "") +
+                               to_string(id(quiet_hours_start_minute));
+      std::string end_time = to_string(id(quiet_hours_end_hour)) + ":" +
+                             (id(quiet_hours_end_minute) < 10 ? "0" : "") +
+                             to_string(id(quiet_hours_end_minute));
+
+      if (id(is_quiet_hour)) {
+        return std::string("Quiet (" + start_time + "-" + end_time + ")");
+      } else {
+        return std::string("Active (" + start_time + "-" + end_time + ")");
+      }
+
+  # System state
+  - platform: template
+    name: "System - State"
+    id: system_state_sensor
+    entity_category: diagnostic
+    icon: "mdi:state-machine"
+    update_interval: ${sensor_update_fast}
+    lambda: |-
+      switch (id(system_state)) {
+        case 0: return std::string("IDLE");
+        case 1: {
+          unsigned long elapsed = millis() - id(dispense_start_time);
+          return std::string("DISPENSING (" + to_string(elapsed/1000) + "s)");
+        }
+        default: return std::string("UNKNOWN (" + to_string(id(system_state)) + ")");
+      }
