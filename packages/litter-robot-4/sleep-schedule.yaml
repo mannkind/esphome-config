@@ -1,0 +1,113 @@
+# Vendored from esphome-litter-robot LR4/2026.9.0
+#   packages/litter-robot4/sleep-schedule.yaml
+#
+# Unmodified from upstream.
+
+switch:
+  - platform: litter_robot4
+    type: sleep_schedule_sun
+    id: sleep_schedule_sun
+    name: "Sunday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_mon
+    id: sleep_schedule_mon
+    name: "Monday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_tue
+    id: sleep_schedule_tue
+    name: "Tuesday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_wed
+    id: sleep_schedule_wed
+    name: "Wednesday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_thu
+    id: sleep_schedule_thu
+    name: "Thursday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_fri
+    id: sleep_schedule_fri
+    name: "Friday Sleep Schedule"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_schedule_sat
+    id: sleep_schedule_sat
+    name: "Saturday Sleep Schedule"
+    disabled_by_default: true
+
+datetime:
+  - platform: litter_robot4
+    type: sleep_sun
+    id: sleep_sun
+    name: "Sunday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_sun
+    id: wake_sun
+    name: "Sunday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_mon
+    id: sleep_mon
+    name: "Monday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_mon
+    id: wake_mon
+    name: "Monday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_tue
+    id: sleep_tue
+    name: "Tuesday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_tue
+    id: wake_tue
+    name: "Tuesday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_wed
+    id: sleep_wed
+    name: "Wednesday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_wed
+    id: wake_wed
+    name: "Wednesday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_thu
+    id: sleep_thu
+    name: "Thursday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_thu
+    id: wake_thu
+    name: "Thursday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_fri
+    id: sleep_fri
+    name: "Friday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_fri
+    id: wake_fri
+    name: "Friday Wake Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleep_sat
+    id: sleep_sat
+    name: "Saturday Sleep Time"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: wake_sat
+    id: wake_sat
+    name: "Saturday Wake Time"
+    disabled_by_default: true

@@ -1,0 +1,216 @@
+# Vendored from esphome-litter-robot LR4/2026.9.0
+#   packages/litter-robot4/base.yaml
+#
+# Local changes from upstream:
+#   - Dropped upstream's `time:` block; uses homeassistant_time from
+#     packages/global.yaml instead.
+#   - Added an on_boot time sync. Upstream only syncs on a 24h interval, which
+#     leaves the robot's clock uncorrected for a day after a fresh flash.
+#   - Renamed the template status sensor's id to status_text. `status` is
+#     reserved once the status binary_sensor platform is loaded, which
+#     packages/global.yaml does. The entity name is unchanged.
+#   - Renamed "Sleeping" to "Sleep Status" and "Hopper" to "Litter Hopper", and
+#     enabled the hopper switch, to match the entities this device already
+#     exposes in Home Assistant.
+
+uart:
+  - id: uart_bus
+    tx_pin: GPIO19
+    rx_pin: GPIO5
+    baud_rate: 256000
+    rx_buffer_size: 2048
+
+litter_robot4:
+  id: my_litter_robot4
+  time_id: homeassistant_time
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - wait_until:
+            lambda: 'return id(homeassistant_time).now().is_valid();'
+        - litter_robot4.sync_time: my_litter_robot4
+
+interval:
+  - interval: 24h
+    then:
+      - litter_robot4.sync_time: my_litter_robot4
+
+text_sensor:
+  - platform: litter_robot4
+    type: status
+    id: robot_status
+    name: "Robot Status"
+    internal: true
+    on_value:
+      - script.execute: update_status
+  - platform: litter_robot4
+    type: power_type
+    id: power_type
+    name: "Power Type"
+    on_value:
+      - script.execute: update_status
+  - platform: litter_robot4
+    type: fault
+    id: fault
+    name: "Fault"
+  - platform: template
+    id: status_text
+    name: "Status"
+    icon: "mdi:information-outline"
+
+script:
+  - id: update_status
+    then:
+      - lambda: |-
+          std::string result;
+          if (id(wifi_status).current_option() == "Off") {
+            result = "WiFi disabled";
+          } else if (id(power_type).state == "Battery") {
+            result = "On battery";
+          } else if (!id(fault).state.empty() && id(fault).state != "None") {
+            result = "Fault detected";
+          } else {
+            const std::string &robot = id(robot_status).state;
+            if (robot == "Cat detected" && !id(laser_detect).state && !id(weight_detect).state) {
+              result = "Waiting to cycle";
+            } else if (robot == "Clean cycle in progress" && (id(laser_detect).state || id(weight_detect).state)) {
+              result = "Cycle interrupted";
+            } else {
+              result = robot;
+            }
+          }
+          if (id(smart_detection_enabled) && !id(cat_confirmed) && (result == "Cat detected" || result == "Waiting to cycle")) {
+            return;
+          }
+          if (!result.empty() && result != id(status_text).state) {
+            id(status_text).publish_state(result);
+          }
+
+button:
+  - platform: litter_robot4
+    type: cycle
+    id: cycle
+    name: "Manual Cycle"
+  - platform: litter_robot4
+    type: empty
+    id: empty
+    name: "Empty Litter"
+  - platform: litter_robot4
+    type: replace_filter
+    id: replace_filter
+    name: "Replace Filter"
+  - platform: litter_robot4
+    type: factory_reset
+    id: factory_reset
+    name: "Factory Reset"
+  - platform: litter_robot4
+    type: reset
+    id: reset
+    name: "Reset"
+
+sensor:
+  - platform: litter_robot4
+    type: waste_drawer_level
+    id: waste_drawer_level
+    name: "Waste Drawer Level"
+  - platform: litter_robot4
+    type: litter_level
+    id: litter_level
+    name: "Litter Level"
+  - platform: litter_robot4
+    type: last_cat_weight
+    id: last_cat_weight
+    name: "Last Cat Weight"
+  - platform: litter_robot4
+    type: clean_cycle_count
+    id: clean_cycle_count
+    name: "Clean Cycles"
+  - platform: litter_robot4
+    type: power_cycle_count
+    id: power_cycle_count
+    name: "Power Cycles"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: empty_cycle_count
+    id: empty_cycle_count
+    name: "Empty Cycles"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: filter_cycle_count
+    id: filter_cycle_count
+    name: "Filter Cycles"
+    disabled_by_default: true
+
+number:
+  - platform: litter_robot4
+    type: clean_cycle_delay
+    id: clean_cycle_delay
+    name: "Clean Cycle Delay"
+
+select:
+  - platform: litter_robot4
+    type: night_light_mode
+    id: night_light_mode
+    name: "Night Light Mode"
+  - platform: litter_robot4
+    type: night_light_brightness
+    id: night_light_brightness
+    name: "Night Light Brightness"
+  - platform: litter_robot4
+    type: panel_brightness
+    id: panel_brightness
+    name: "Panel Brightness"
+
+switch:
+  - platform: litter_robot4
+    type: control_panel_lockout
+    id: control_panel_lockout
+    name: "Control Panel Lockout"
+  - platform: litter_robot4
+    type: power
+    id: power
+    name: "Power"
+  - platform: litter_robot4
+    type: litter_hopper
+    id: litter_hopper
+    name: "Litter Hopper"
+
+binary_sensor:
+  - platform: litter_robot4
+    type: waste_drawer_full
+    id: waste_drawer_full
+    name: "Waste Drawer Full"
+  - platform: litter_robot4
+    type: bonnet_removed
+    id: bonnet_removed
+    name: "Bonnet Removed"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: night_light
+    id: night_light
+    name: "Night Light"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: sleeping
+    id: sleeping
+    name: "Sleep Status"
+    disabled_by_default: true
+  - platform: litter_robot4
+    type: laser_detect
+    id: laser_detect
+    name: "Laser Detect"
+    on_state:
+      - script.execute: update_status
+  - platform: litter_robot4
+    type: weight_detect
+    id: weight_detect
+    name: "Weight Detect"
+    on_state:
+      - script.execute: update_status
+  - platform: litter_robot4
+    type: hopper_motor
+    id: hopper_motor
+    name: "Hopper Motor"
+    disabled_by_default: true

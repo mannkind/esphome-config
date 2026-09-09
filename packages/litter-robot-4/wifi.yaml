@@ -1,0 +1,50 @@
+# Vendored from esphome-litter-robot LR4/2026.9.0
+#   packages/litter-robot4/wifi.yaml
+#
+# Local changes from upstream:
+#   - Removed the on_value branch that called wifi.disable / wifi.enable.
+#     REG_WIFI_STATUS is polled, and the select publishes whatever the robot
+#     reports, so the robot reporting "Off" would disable WiFi on the ESP and
+#     leave the device unreachable until someone power-cycles it in person.
+#     The ESP -> robot panel sync below is kept.
+
+script:
+  - id: sync_wifi_status
+    then:
+      - lambda: |-
+          const char *target;
+          if (esphome::wifi::global_wifi_component->is_disabled()) {
+            target = "Off";
+          } else if (esphome::wifi::global_wifi_component->is_connected()) {
+            target = "Connected";
+          } else if (esphome::wifi::global_wifi_component->is_ap_active()) {
+            target = "Pairing";
+          } else {
+            target = "Connecting";
+          }
+          if (id(wifi_status).current_option() != target) {
+            id(wifi_status).make_call().set_option(target).perform();
+          }
+
+interval:
+  - interval: 30s
+    then:
+      - script.execute: sync_wifi_status
+
+select:
+  - platform: litter_robot4
+    type: wifi_status
+    id: wifi_status
+    name: "WiFi Status"
+    disabled_by_default: true
+    on_value:
+      then:
+        - script.execute: update_status
+
+wifi:
+  on_connect:
+    then:
+      - script.execute: sync_wifi_status
+  on_disconnect:
+    then:
+      - script.execute: sync_wifi_status

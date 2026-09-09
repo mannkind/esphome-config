@@ -1,0 +1,57 @@
+# Vendored from esphome-litter-robot LR4/2026.9.0
+#   packages/litter-robot4/cat-tracking.yaml
+#
+# Unmodified from upstream.
+
+substitutions:
+  weight_sensor_id: "last_cat_weight"
+
+cat_tracker:
+  id: cat_tracker_hub
+  weight_sensor: ${weight_sensor_id}
+  tolerance: 0.6
+
+number:
+  - platform: cat_tracker
+    id: cat1weight
+    name: "Cat 1 Weight"
+    disabled_by_default: true
+  - platform: cat_tracker
+    id: cat2weight
+    name: "Cat 2 Weight"
+    disabled_by_default: true
+  - platform: cat_tracker
+    id: cat3weight
+    name: "Cat 3 Weight"
+    disabled_by_default: true
+  - platform: cat_tracker
+    id: cat4weight
+    name: "Cat 4 Weight"
+    disabled_by_default: true
+
+sensor:
+  - platform: cat_tracker
+    id: cat1_visits
+    name: "Cat 1 Visits"
+    cat_weight: cat1weight
+    disabled_by_default: true
+  - platform: cat_tracker
+    id: cat2_visits
+    name: "Cat 2 Visits"
+    cat_weight: cat2weight
+    disabled_by_default: true
+  - platform: cat_tracker
+    id: cat3_visits
+    name: "Cat 3 Visits"
+    cat_weight: cat3weight
+    disabled_by_default: true
+  - platform: cat_tracker
+    id: cat4_visits
+    name: "Cat 4 Visits"
+    cat_weight: cat4weight
+    disabled_by_default: true
+
+button:
+  - platform: cat_tracker
+    id: cat_tracker_reset
+    name: "Cat Tracker Reset"

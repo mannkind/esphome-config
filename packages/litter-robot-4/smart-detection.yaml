@@ -1,0 +1,77 @@
+# Vendored from esphome-litter-robot LR4/2026.9.0
+#   packages/litter-robot4/smart-detection.yaml
+#
+# Local changes from upstream:
+#   - on_boot written in list form so it merges with base.yaml's on_boot rather
+#     than colliding with it.
+
+esphome:
+  on_boot:
+    - then:
+        - if:
+            condition:
+              lambda: 'return id(smart_detection_enabled);'
+            then:
+              - switch.turn_on: smart_cat_detection
+
+globals:
+  - id: smart_detection_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: cat_confirmed
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: cat_clear_seconds
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+switch:
+  - platform: template
+    id: smart_cat_detection
+    name: "Smart Cat Detection"
+    icon: "mdi:check-underline-circle-outline"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - globals.set:
+          id: smart_detection_enabled
+          value: 'true'
+    on_turn_off:
+      - globals.set:
+          id: smart_detection_enabled
+          value: 'false'
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          if (!id(smart_detection_enabled)) {
+            id(cat_confirmed) = false;
+            id(cat_clear_seconds) = 0;
+            return;
+          }
+          const bool cat_detected = id(robot_status).state == "Cat detected";
+          const bool laser = id(laser_detect).state;
+          const bool weight = id(weight_detect).state;
+          if (!cat_detected) {
+            id(cat_confirmed) = false;
+            id(cat_clear_seconds) = 0;
+            return;
+          }
+          if (laser && weight) {
+            if (!id(cat_confirmed))
+              id(update_status)->execute();
+            id(cat_confirmed) = true;
+            id(cat_clear_seconds) = 0;
+          } else if (!laser && !weight) {
+            id(cat_clear_seconds) += 1;
+            if (id(cat_clear_seconds) == 10 && !id(cat_confirmed)) {
+              id(reset).press();
+            }
+          } else {
+            id(cat_clear_seconds) = 0;
+          }
