@@ -19,10 +19,10 @@ time:
 sensor:
   - platform: uptime
     name: Uptime
-    update_interval: 60s  # Standardized diagnostic update interval
+    update_interval: 60s # Standardized diagnostic update interval
     entity_category: diagnostic
 
-binary_sensor:   
+binary_sensor:
   - platform: status
     name: Status
 

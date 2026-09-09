@@ -27,7 +27,7 @@ button:
     internal: true
     on_press:
       - switch.turn_on: open_close_btn
-      - delay: '0.25s'
+      - delay: "0.25s"
       - switch.turn_off: open_close_btn
 
 cover:

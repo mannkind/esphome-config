@@ -3,3 +3,6 @@ secrets.yaml
 venv
 .DS_Store
 **/.DS_Store
+.vscode
+
+!mise.toml

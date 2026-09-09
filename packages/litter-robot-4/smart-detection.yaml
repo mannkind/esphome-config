@@ -10,7 +10,7 @@ esphome:
     - then:
         - if:
             condition:
-              lambda: 'return id(smart_detection_enabled);'
+              lambda: "return id(smart_detection_enabled);"
             then:
               - switch.turn_on: smart_cat_detection
 
@@ -18,15 +18,15 @@ globals:
   - id: smart_detection_enabled
     type: bool
     restore_value: yes
-    initial_value: 'true'
+    initial_value: "true"
   - id: cat_confirmed
     type: bool
     restore_value: no
-    initial_value: 'false'
+    initial_value: "false"
   - id: cat_clear_seconds
     type: uint32_t
     restore_value: no
-    initial_value: '0'
+    initial_value: "0"
 
 switch:
   - platform: template
@@ -39,11 +39,11 @@ switch:
     on_turn_on:
       - globals.set:
           id: smart_detection_enabled
-          value: 'true'
+          value: "true"
     on_turn_off:
       - globals.set:
           id: smart_detection_enabled
-          value: 'false'
+          value: "false"
 
 interval:
   - interval: 1s

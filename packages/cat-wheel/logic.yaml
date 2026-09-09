@@ -42,7 +42,6 @@ interval:
       - script.execute: update_quiet_hours_status
 
 script:
-
   - id: set_state_idle
     then:
       - lambda: |-

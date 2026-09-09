@@ -1,4 +1,3 @@
-
 packages:
   rtl_433: github://juanboro/esphome-rtl_433-decoder/rtl_433.yaml
 
@@ -29,8 +28,8 @@ remote_receiver:
   id: rf_rx
   pin: GPIO41
   #dump: ['raw', 'rc_switch']
-  filter: 250us        # ignore pulses shorter than this
-  idle: 4ms            # end of a transmission
+  filter: 250us # ignore pulses shorter than this
+  idle: 4ms # end of a transmission
   tolerance: 25%
   buffer_size: 2kb
 
@@ -56,13 +55,13 @@ radio_frequency:
 rtl_433:
   id: rtl433
   receiver_id: rf_rx
-  on_json_message: 
+  on_json_message:
     then:
       - homeassistant.event:
           event: esphome.rtl_433
           data:
             hostname: !lambda |-
-                return App.get_name();
+              return App.get_name();
             message: !lambda |-
               return std::string(json::build_json([x](JsonObject root) {
                 root.set(x);

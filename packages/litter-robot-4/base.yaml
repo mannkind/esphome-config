@@ -29,7 +29,7 @@ esphome:
     - priority: -100
       then:
         - wait_until:
-            lambda: 'return id(homeassistant_time).now().is_valid();'
+            lambda: "return id(homeassistant_time).now().is_valid();"
         - litter_robot4.sync_time: my_litter_robot4
 
 interval:

@@ -33,7 +33,7 @@ button:
     name: Factory reset
     entity_category: diagnostic
 
-# "Power toggle" button
+  # "Power toggle" button
   - platform: template
     name: Power Toggle
     id: midea_power_toggle

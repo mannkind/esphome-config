@@ -1,9 +1,8 @@
 globals:
-
   - id: system_state
     type: int
     restore_value: no
-    initial_value: "0"  # IDLE
+    initial_value: "0" # IDLE
 
   - id: dispense_start_time
     type: unsigned long

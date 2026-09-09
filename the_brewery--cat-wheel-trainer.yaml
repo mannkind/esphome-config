@@ -28,13 +28,13 @@ substitutions:
   default_distance_threshold: "150"
   default_growth_factor: "1.2"
   default_max_multiplier: "20"
-  default_hall_distance_cm: "22.5"   # 383cm circumference / 17 magnets
-  default_stepper_steps: "1600"      # half turn at 1/16 microstepping
-  default_inactivity_ms: "300000"    # 5 minutes
+  default_hall_distance_cm: "22.5" # 383cm circumference / 17 magnets
+  default_stepper_steps: "1600" # half turn at 1/16 microstepping
+  default_inactivity_ms: "300000" # 5 minutes
 
   min_distance_threshold: "50"
   max_distance_threshold: "5000"
-  min_growth_factor: "1.0"           # 1.0 = deliberately flat interval
+  min_growth_factor: "1.0" # 1.0 = deliberately flat interval
   max_growth_factor: "3.0"
   min_max_multiplier: "2"
   max_max_multiplier: "100"

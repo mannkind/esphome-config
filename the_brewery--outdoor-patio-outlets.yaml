@@ -47,9 +47,9 @@ light:
   - platform: binary
     name: Twinkle Lights LED
     id: relay1_led
-    internal: true    
+    internal: true
     output: relay1_led_gpio
-    
+
   - platform: binary
     name: Nectar Warmer LED
     id: relay2_led
@@ -76,7 +76,7 @@ sensor:
     current_resistor: 0.001
     voltage_divider: 770
     change_mode_every: 3
-    update_interval: 3s    
+    update_interval: 3s
     current:
       name: Amps
       unit_of_measurement: A
@@ -94,7 +94,7 @@ sensor:
         - multiply: 0.001
         - calibrate_linear:
             - 0.0 -> 0.0
-            - 134 -> 58 
+            - 134 -> 58
 
 binary_sensor:
   - platform: gpio

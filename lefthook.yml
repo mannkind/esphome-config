@@ -1,0 +1,27 @@
+# Git hooks. Install them with `mise run hooks:install` after cloning -
+# lefthook writes .git/hooks, which git never copies from a clone.
+#
+# Escape hatches, in order of how blunt they are:
+#   SKIP_TESTS=1 git push  skip the firmware build, keep everything else
+#   LEFTHOOK=0 git commit  skip every hook
+#   git commit --no-verify same, but easier to do by accident
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: format
+      glob: "*.{yaml,yml}"
+      # Only staged files, and restage what prettier rewrites so the commit
+      # contains the formatted version rather than the version you wrote.
+      run: bash .lefthook/pre-commit/format.sh {staged_files}
+      stage_fixed: true
+
+pre-push:
+  jobs:
+    - name: unit
+      run: |
+        if [ -n "${SKIP_TESTS:-}" ]; then
+          echo "unit: skipped (SKIP_TESTS set)"
+        else
+          ./tests/unit.sh
+        fi

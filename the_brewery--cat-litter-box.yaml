@@ -14,7 +14,7 @@ esp32:
   board: esp32dev
   framework:
     type: esp-idf
-    advanced: 
+    advanced:
       sram1_as_iram: true
       minimum_chip_revision: "3.1"
 

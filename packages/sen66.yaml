@@ -1,10 +1,10 @@
-
 substitutions:
-  sen66_sda: GPIO5  # XIAO ESP32S3 D4
-  sen66_scl: GPIO6  # XIAO ESP32S3 D5
-  sen66_temperature_offset: "-2.33"  # Self-heating inside the enclosure, °C
-  sen66_humidity_trim: "0"           # Residual sensor bias only; self-heating
-                                     # is handled by the Magnus ratio
+  sen66_sda: GPIO5 # XIAO ESP32S3 D4
+  sen66_scl: GPIO6 # XIAO ESP32S3 D5
+  sen66_temperature_offset: "-2.33" # Self-heating inside the enclosure, °C
+  sen66_humidity_trim:
+    "0" # Residual sensor bias only; self-heating
+    # is handled by the Magnus ratio
 
 i2c:
   id: i2c_bus

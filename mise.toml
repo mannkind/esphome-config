@@ -1,0 +1,21 @@
+[tools]
+lefthook = "latest"
+prettier = "3"
+
+[tasks.'esphome:venv']
+description = "Run as $(mr esphome:venv)"
+run = 'echo source .venv/bin/activate'
+
+[tasks.'esphome:dashboard']
+run = 'esphome-device-builder .'
+
+[tasks.'esphome:update']
+run = 'uv pip install -U esphome'
+
+[tasks.'hooks:install']
+description = "Install the git hooks (run once after cloning)"
+run = 'lefthook install'
+
+[tasks.'test:unit']
+description = "Compile firmware for every device"
+run = './tests/unit.sh'

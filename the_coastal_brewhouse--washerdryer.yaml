@@ -27,10 +27,10 @@ logger:
 
 uart:
   id: uart_gea
-  tx_pin: 
+  tx_pin:
     number: GPIO5
     inverted: true
-  rx_pin: 
+  rx_pin:
     number: GPIO10
     inverted: true
   baud_rate: 19200
@@ -38,7 +38,7 @@ uart:
 gea:
   id: gea_hub
   uart_id: uart_gea
-  protocol: gea2  
+  protocol: gea2
   src_address: 0xBB
   dest_address: 0x23
   erd_lookup: true
@@ -105,7 +105,7 @@ binary_sensor:
   - platform: template
     name: "GEA Bus Connected"
     entity_category: "diagnostic"
-    lambda: 'return id(gea_hub).is_bus_connected();'
+    lambda: "return id(gea_hub).is_bus_connected();"
 
   - platform: gea
     gea_id: gea_hub
@@ -113,7 +113,7 @@ binary_sensor:
     erd: 0x2012
     inverted: true
     device_class: opening
-       
+
 output:
   - platform: ledc
     pin:
@@ -125,7 +125,7 @@ output:
 
   - platform: ledc
     max_power: 0.03
-    pin: 
+    pin:
       number: 3
       inverted: false
     id: led2_output

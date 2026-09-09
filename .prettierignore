@@ -1,0 +1,6 @@
+.venv/
+.esphome/
+tests/golden/
+secrets.yaml
+.device-builder*
+.vscode/

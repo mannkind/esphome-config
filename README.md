@@ -83,7 +83,39 @@ Locally, mise tasks:
 $(mise run esphome:venv)     # source .venv/bin/activate
 mise run esphome:dashboard   # esphome-device-builder
 mise run esphome:update      # bump esphome
+mise run hooks:install       # install the git hooks (once per clone)
 ```
+
+## Tests
+
+`tests/unit.sh` compiles firmware for every device. A config that renders is not
+proof of much; a config that compiles is, and it catches the things `esphome
+config` waves through - a bad pin, a lambda that doesn't build, a component
+whose options changed under you.
+
+```
+mise run test:unit                        # compile all 19
+./tests/unit.sh the_brewery--garage.yaml  # or just the one you're working on
+```
+
+It keeps going after a failure and lists every broken device at the end, so one
+run tells you the whole story.
+
+The first compile of a device is slow - minutes. After that esphome caches builds
+in `.esphome/` and reruns are quick, so the painful run is the one right after a
+clone or an esphome upgrade.
+
+## Hooks
+
+`lefthook.yml`, installed by `mise run hooks:install`:
+
+| Hook | What it does |
+| --- | --- |
+| pre-commit | Formats staged YAML with prettier and restages it |
+| pre-push | Compiles every device |
+
+`SKIP_TESTS=1 git push` skips the compile and leaves the rest. `LEFTHOOK=0`
+skips everything.
 
 ## Device structure
 
