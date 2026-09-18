@@ -1,7 +1,8 @@
-# Vendored from esphome-litter-robot LR4/2026.9.0
-#   packages/litter-robot4/cat-tracking.yaml
+# Vendored from esphome-litter-robot LR4/2026.9.1
+#   packages/cat-tracking.yaml (moved out of packages/litter-robot4/ in 2026.9.1)
 #
-# Unmodified from upstream.
+# Unmodified from upstream. Kept under litter-robot-4/ here; nothing else in
+# this repo uses it.
 
 substitutions:
   weight_sensor_id: "last_cat_weight"

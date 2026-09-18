@@ -17,21 +17,22 @@ jobs:
           - the_brewery--bt-proxy-bedrooms-poe.yaml
           - the_brewery--bt-proxy-office-poe.yaml
           - the_brewery--cat-laser.yaml
-          - the_brewery--cat-wheel-trainer.yaml
           - the_brewery--cat-litter-box.yaml
+          - the_brewery--cat-wheel-trainer.yaml
           - the_brewery--co2-office.yaml
+          - the_brewery--fireplace.yaml
+          - the_brewery--garage.yaml
+          - the_brewery--outdoor-patio-outlets.yaml
+          - the_brewery--outdoor-patio-shades.yaml
+          - the_brewery--rf-proxy.yaml
           - the_coastal_brewhouse--air-quality-main.yaml
           - the_coastal_brewhouse--airconditioner.yaml
           - the_coastal_brewhouse--bt-proxy.yaml
           - the_coastal_brewhouse--rf-proxy.yaml
           - the_coastal_brewhouse--washerdryer.yaml
           - the_coastal_brewhouse--waterheater.yaml
-          - the_brewery--fireplace.yaml
-          - the_brewery--garage.yaml
-          - the_brewery--outdoor-patio-outlets.yaml
-          - the_brewery--outdoor-patio-shades.yaml
           - the_ranch--bt-proxy.yaml
-          - the_brewery--rf-proxy.yaml
+          - the_ranch--co2-main.yaml
     outputs:
       esphome-version: ${{ steps.esphome-build.outputs.esphome-version }}
     steps:

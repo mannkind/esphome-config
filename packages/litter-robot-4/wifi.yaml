@@ -1,15 +1,18 @@
-# Vendored from esphome-litter-robot LR4/2026.9.0
+# Vendored from esphome-litter-robot LR4/2026.9.1
 #   packages/litter-robot4/wifi.yaml
 #
 # Local changes from upstream:
-#   - Removed the on_value branch that called wifi.disable / wifi.enable.
-#     REG_WIFI_STATUS is polled, and the select publishes whatever the robot
+#   - Dropped the apply_wifi_status script and the select's on_value hook into
+#     it. REG_WIFI_STATUS is polled, and the select publishes whatever the robot
 #     reports, so the robot reporting "Off" would disable WiFi on the ESP and
 #     leave the device unreachable until someone power-cycles it in person.
-#     The ESP -> robot panel sync below is kept.
+#     Upstream deferred that branch to a script in 2026.9.1; the branch itself
+#     is what we don't want. The ESP -> robot panel sync below is kept.
+#     custom-status.yaml !extends the same select for its update_status hook,
+#     so the select needs no on_value here.
 
 script:
-  - id: sync_wifi_status
+  - id: set_robot_wifi_status
     then:
       - lambda: |-
           const char *target;
@@ -29,7 +32,7 @@ script:
 interval:
   - interval: 30s
     then:
-      - script.execute: sync_wifi_status
+      - script.execute: set_robot_wifi_status
 
 select:
   - platform: litter_robot4
@@ -37,14 +40,11 @@ select:
     id: wifi_status
     name: "WiFi Status"
     disabled_by_default: true
-    on_value:
-      then:
-        - script.execute: update_status
 
 wifi:
   on_connect:
     then:
-      - script.execute: sync_wifi_status
+      - script.execute: set_robot_wifi_status
   on_disconnect:
     then:
-      - script.execute: sync_wifi_status
+      - script.execute: set_robot_wifi_status

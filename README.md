@@ -13,35 +13,35 @@ because each has its own credentials.
 
 ### the_brewery
 
-| File | What it is |
-| --- | --- |
-| `air-quality-main` | Sensirion SEN66 — PM, CO2, RH/T, VOC, NOx |
-| `bt-proxy-bedrooms-poe`, `bt-proxy-office-poe` | Bluetooth proxies, wired |
-| `cat-laser` | Pan/tilt servos and a laser |
-| `cat-litter-box` | Litter-Robot 4 over UART; external component |
-| `cat-wheel-trainer` | Exercise wheel w/ treat dispenser; logic in `packages/cat-wheel/` |
-| `co2-office` | SenseAir CO2 |
-| `fireplace` | One relay |
-| `garage` | Door controller |
-| `outdoor-patio-outlets` | Outlets w/ energy monitoring |
-| `outdoor-patio-shades` | Motorized shades |
-| `rf-proxy` | CC1101 at 433.92MHz, rtl_433 decode |
+| File                                           | What it is                                                                                                                                           |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `air-quality-main`                             | Sensirion SEN66 — PM, CO2, RH/T, VOC, NOx                                                                                                            |
+| `bt-proxy-bedrooms-poe`, `bt-proxy-office-poe` | Bluetooth proxies, wired                                                                                                                             |
+| `cat-laser`                                    | Pan/tilt servos and a laser                                                                                                                          |
+| `cat-litter-box`                               | Litter-Robot 4 over UART; external component. Roams: it knows both the brewery and coastal brewhouse WiFi, and lives at the brewery most of the time |
+| `cat-wheel-trainer`                            | Exercise wheel w/ treat dispenser; logic in `packages/cat-wheel/`                                                                                    |
+| `co2-office`                                   | SenseAir CO2                                                                                                                                         |
+| `fireplace`                                    | One relay                                                                                                                                            |
+| `garage`                                       | Door controller                                                                                                                                      |
+| `outdoor-patio-outlets`                        | Outlets w/ energy monitoring                                                                                                                         |
+| `outdoor-patio-shades`                         | Motorized shades                                                                                                                                     |
+| `rf-proxy`                                     | CC1101 at 433.92MHz, rtl_433 decode                                                                                                                  |
 
 ### the_coastal_brewhouse
 
-| File | What it is |
-| --- | --- |
-| `air-quality-main` | SEN66 |
-| `airconditioner` | Midea AC over UART |
-| `bt-proxy` | Bluetooth proxy, wired |
-| `rf-proxy` | CC1101 at 433.92MHz, rtl_433 decode |
-| `washerdryer` | GE washer/dryer on the GEA bus |
-| `waterheater` | GE heat-pump water heater on the GEA bus |
+| File               | What it is                               |
+| ------------------ | ---------------------------------------- |
+| `air-quality-main` | SEN66                                    |
+| `airconditioner`   | Midea AC over UART                       |
+| `bt-proxy`         | Bluetooth proxy, wired                   |
+| `rf-proxy`         | CC1101 at 433.92MHz, rtl_433 decode      |
+| `washerdryer`      | GE washer/dryer on the GEA bus           |
+| `waterheater`      | GE heat-pump water heater on the GEA bus |
 
 ### the_ranch
 
-| File | What it is |
-| --- | --- |
+| File       | What it is      |
+| ---------- | --------------- |
 | `bt-proxy` | Bluetooth proxy |
 
 ## packages/
@@ -50,8 +50,9 @@ because each has its own credentials.
 entities (uptime, status, restart, safe mode). Every device includes it.
 
 **Network** — `wifi.yaml`, `coast-wifi.yaml`, `ranch-wifi.yaml`, one per
-property, credentials from `secrets.yaml`. `ethernet.yaml` is the W5500 for the
-PoE nodes.
+property, credentials from `secrets.yaml`. `brewery-coast-wifi.yaml` carries
+both of the first two as a `networks:` list, for a device that moves between
+those properties. `ethernet.yaml` is the W5500 for the PoE nodes.
 
 **Boards** — `esp32-d1_mini32`, `esp32-s3-devkitc`, `esp32-xiao-s3`,
 `esp32-c3-devkitc`, `esp32-wrover`, `esp8266-d1_mini`, `esp8266-esp12e`. The
@@ -64,8 +65,11 @@ litter box skips these and sets its own `esp32:` block; it needs esp-idf w/
 - `sen66.yaml` — pins via `sen66_sda`/`sen66_scl`, plus
   `sen66_temperature_offset` and `sen66_humidity_trim`
 - `cat-wheel/` — globals, sensors, metrics, status, controls, logic, diagnostics
-- `litter_robot_4/` — vendored from esphome-litter-robot `LR4/2026.9.0`. Each
-  file heads with the local changes and why; recheck them on a version bump.
+- `litter-robot-4/` — vendored from esphome-litter-robot `LR4/2026.9.1`:
+  `base`, `sleep-schedule` (which pulls in `sleep-override`), `wifi`, `hopper`,
+  `smart-detection`, `cat-tracking`, `custom-status`. Include `custom-status`
+  last; it `!extend`s entities the others define. Each file heads with the local
+  changes and why; recheck them on a version bump.
 
 ## Secrets
 
@@ -109,10 +113,10 @@ clone or an esphome upgrade.
 
 `lefthook.yml`, installed by `mise run hooks:install`:
 
-| Hook | What it does |
-| --- | --- |
+| Hook       | What it does                                      |
+| ---------- | ------------------------------------------------- |
 | pre-commit | Formats staged YAML with prettier and restages it |
-| pre-push | Compiles every device |
+| pre-push   | Compiles every device                             |
 
 `SKIP_TESTS=1 git push` skips the compile and leaves the rest. `LEFTHOOK=0`
 skips everything.

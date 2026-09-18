@@ -1,0 +1,91 @@
+# Vendored from esphome-litter-robot LR4/2026.9.1
+#   packages/litter-robot4/sleep-override.yaml
+#
+# New in 2026.9.1. Pulled in by sleep-schedule.yaml, which is how upstream
+# wires it.
+#
+# Unmodified from upstream.
+
+switch:
+  - platform: template
+    id: sleep_override
+    name: "Sleep Override"
+    icon: "mdi:bed-clock"
+    entity_category: config
+    restore_mode: DISABLED
+    lambda: |-
+      return id(sleep_schedule_sun).state && id(sleep_schedule_mon).state && id(sleep_schedule_tue).state &&
+             id(sleep_schedule_wed).state && id(sleep_schedule_thu).state && id(sleep_schedule_fri).state &&
+             id(sleep_schedule_sat).state &&
+             id(sleep_sun).hour == 0 && id(sleep_sun).minute == 0 &&
+             id(wake_sun).hour == 0 && id(wake_sun).minute == 0 &&
+             id(sleep_mon).hour == 0 && id(sleep_mon).minute == 0 &&
+             id(wake_mon).hour == 0 && id(wake_mon).minute == 0 &&
+             id(sleep_tue).hour == 0 && id(sleep_tue).minute == 0 &&
+             id(wake_tue).hour == 0 && id(wake_tue).minute == 0 &&
+             id(sleep_wed).hour == 0 && id(sleep_wed).minute == 0 &&
+             id(wake_wed).hour == 0 && id(wake_wed).minute == 0 &&
+             id(sleep_thu).hour == 0 && id(sleep_thu).minute == 0 &&
+             id(wake_thu).hour == 0 && id(wake_thu).minute == 0 &&
+             id(sleep_fri).hour == 0 && id(sleep_fri).minute == 0 &&
+             id(wake_fri).hour == 0 && id(wake_fri).minute == 0 &&
+             id(sleep_sat).hour == 0 && id(sleep_sat).minute == 0 &&
+             id(wake_sat).hour == 0 && id(wake_sat).minute == 0;
+    turn_on_action:
+      - datetime.time.set:
+          id: sleep_sun
+          time: "00:00:00"
+      - datetime.time.set:
+          id: wake_sun
+          time: "00:00:00"
+      - datetime.time.set:
+          id: sleep_mon
+          time: "00:00:00"
+      - datetime.time.set:
+          id: wake_mon
+          time: "00:00:00"
+      - datetime.time.set:
+          id: sleep_tue
+          time: "00:00:00"
+      - datetime.time.set:
+          id: wake_tue
+          time: "00:00:00"
+      - datetime.time.set:
+          id: sleep_wed
+          time: "00:00:00"
+      - datetime.time.set:
+          id: wake_wed
+          time: "00:00:00"
+      - datetime.time.set:
+          id: sleep_thu
+          time: "00:00:00"
+      - datetime.time.set:
+          id: wake_thu
+          time: "00:00:00"
+      - datetime.time.set:
+          id: sleep_fri
+          time: "00:00:00"
+      - datetime.time.set:
+          id: wake_fri
+          time: "00:00:00"
+      - datetime.time.set:
+          id: sleep_sat
+          time: "00:00:00"
+      - datetime.time.set:
+          id: wake_sat
+          time: "00:00:00"
+      - switch.turn_on: sleep_schedule_sun
+      - switch.turn_on: sleep_schedule_mon
+      - switch.turn_on: sleep_schedule_tue
+      - switch.turn_on: sleep_schedule_wed
+      - switch.turn_on: sleep_schedule_thu
+      - switch.turn_on: sleep_schedule_fri
+      - switch.turn_on: sleep_schedule_sat
+    turn_off_action:
+      - switch.turn_off: sleep_schedule_sun
+      - switch.turn_off: sleep_schedule_mon
+      - switch.turn_off: sleep_schedule_tue
+      - switch.turn_off: sleep_schedule_wed
+      - switch.turn_off: sleep_schedule_thu
+      - switch.turn_off: sleep_schedule_fri
+      - switch.turn_off: sleep_schedule_sat

@@ -1,17 +1,28 @@
-# Vendored from esphome-litter-robot LR4/2026.9.0
+# Vendored from esphome-litter-robot LR4/2026.9.1
 #   packages/litter-robot4/base.yaml
 #
 # Local changes from upstream:
-#   - Dropped upstream's `time:` block; uses homeassistant_time from
-#     packages/global.yaml instead.
+#   - Dropped upstream's `esp32:` block. The device file sets its own, because
+#     this board needs sram1_as_iram and a minimum_chip_revision.
+#   - Kept the time wiring here rather than where 2026.9.1 moved it
+#     (sleep-schedule.yaml): `time_id` points at homeassistant_time from
+#     packages/global.yaml, and the 24h sync interval lives here. The clock is
+#     not a sleep-schedule concern and base is always included.
 #   - Added an on_boot time sync. Upstream only syncs on a 24h interval, which
 #     leaves the robot's clock uncorrected for a day after a fresh flash.
-#   - Renamed the template status sensor's id to status_text. `status` is
-#     reserved once the status binary_sensor platform is loaded, which
-#     packages/global.yaml does. The entity name is unchanged.
-#   - Renamed "Sleeping" to "Sleep Status" and "Hopper" to "Litter Hopper", and
-#     enabled the hopper switch, to match the entities this device already
-#     exposes in Home Assistant.
+#   - Renamed "Sleeping" to "Sleep Status", to match the entity this device
+#     already exposes in Home Assistant.
+#
+# Upstream changes in 2026.9.1 that move entities, worth knowing before you go
+# looking for them:
+#   - The "Status" template sensor and its update_status script moved to
+#     custom-status.yaml; the hopper switch moved to hopper.yaml.
+#   - laser_detect/weight_detect are now curtain_detected/weight_detected.
+#   - bonnet_removed is now bonnet, and the component inverts it: it reads true
+#     when the bonnet is ON, not removed. The HA entity flips meaning.
+#   - The hopper_motor binary_sensor is gone from the component entirely; there
+#     is no replacement, and hopper.yaml's "Hopper Status" covers the ground.
+#   - New debug_mode switch.
 
 uart:
   - id: uart_bus
@@ -43,50 +54,14 @@ text_sensor:
     id: robot_status
     name: "Robot Status"
     internal: true
-    on_value:
-      - script.execute: update_status
   - platform: litter_robot4
     type: power_type
     id: power_type
     name: "Power Type"
-    on_value:
-      - script.execute: update_status
   - platform: litter_robot4
     type: fault
     id: fault
     name: "Fault"
-  - platform: template
-    id: status_text
-    name: "Status"
-    icon: "mdi:information-outline"
-
-script:
-  - id: update_status
-    then:
-      - lambda: |-
-          std::string result;
-          if (id(wifi_status).current_option() == "Off") {
-            result = "WiFi disabled";
-          } else if (id(power_type).state == "Battery") {
-            result = "On battery";
-          } else if (!id(fault).state.empty() && id(fault).state != "None") {
-            result = "Fault detected";
-          } else {
-            const std::string &robot = id(robot_status).state;
-            if (robot == "Cat detected" && !id(laser_detect).state && !id(weight_detect).state) {
-              result = "Waiting to cycle";
-            } else if (robot == "Clean cycle in progress" && (id(laser_detect).state || id(weight_detect).state)) {
-              result = "Cycle interrupted";
-            } else {
-              result = robot;
-            }
-          }
-          if (id(smart_detection_enabled) && !id(cat_confirmed) && (result == "Cat detected" || result == "Waiting to cycle")) {
-            return;
-          }
-          if (!result.empty() && result != id(status_text).state) {
-            id(status_text).publish_state(result);
-          }
 
 button:
   - platform: litter_robot4
@@ -173,9 +148,9 @@ switch:
     id: power
     name: "Power"
   - platform: litter_robot4
-    type: litter_hopper
-    id: litter_hopper
-    name: "Litter Hopper"
+    type: debug_mode
+    id: debug_mode
+    name: "Debug Mode"
 
 binary_sensor:
   - platform: litter_robot4
@@ -183,9 +158,9 @@ binary_sensor:
     id: waste_drawer_full
     name: "Waste Drawer Full"
   - platform: litter_robot4
-    type: bonnet_removed
-    id: bonnet_removed
-    name: "Bonnet Removed"
+    type: bonnet
+    id: bonnet
+    name: "Bonnet"
     disabled_by_default: true
   - platform: litter_robot4
     type: night_light
@@ -198,19 +173,10 @@ binary_sensor:
     name: "Sleep Status"
     disabled_by_default: true
   - platform: litter_robot4
-    type: laser_detect
-    id: laser_detect
-    name: "Laser Detect"
-    on_state:
-      - script.execute: update_status
+    type: curtain_detected
+    id: curtain_detected
+    name: "Curtain Detected"
   - platform: litter_robot4
-    type: weight_detect
-    id: weight_detect
-    name: "Weight Detect"
-    on_state:
-      - script.execute: update_status
-  - platform: litter_robot4
-    type: hopper_motor
-    id: hopper_motor
-    name: "Hopper Motor"
-    disabled_by_default: true
+    type: weight_detected
+    id: weight_detected
+    name: "Weight Detected"

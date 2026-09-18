@@ -1,14 +1,17 @@
 packages:
   global: !include packages/global.yaml
-  wifi: !include packages/wifi.yaml
+  wifi: !include packages/brewery-coast-wifi.yaml
   lr4_base: !include packages/litter-robot-4/base.yaml
   lr4_sleep_schedule: !include packages/litter-robot-4/sleep-schedule.yaml
+  lr4_wifi: !include packages/litter-robot-4/wifi.yaml
+  lr4_hopper: !include packages/litter-robot-4/hopper.yaml
+  lr4_smart_detection: !include packages/litter-robot-4/smart-detection.yaml
   lr4_cat_tracking: !include
     file: packages/litter-robot-4/cat-tracking.yaml
     vars:
       weight_sensor_id: last_cat_weight
-  lr4_wifi: !include packages/litter-robot-4/wifi.yaml
-  lr4_smart_detection: !include packages/litter-robot-4/smart-detection.yaml
+  # Last: custom-status !extends entities the packages above define.
+  lr4_custom_status: !include packages/litter-robot-4/custom-status.yaml
 
 esp32:
   board: esp32dev
@@ -26,4 +29,7 @@ external_components:
   source:
     type: git
     url: https://codeberg.org/Joseph-DiGiovanni/esphome-litter-robot.git
-    ref: LR4/2026.9.0
+    ref: LR4/2026.9.1
+
+logger:
+  level: debug

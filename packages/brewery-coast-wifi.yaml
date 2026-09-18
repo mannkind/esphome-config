@@ -1,0 +1,11 @@
+# Two networks for a device that moves between properties. ESPHome scans and
+# picks whichever is in range, so the same firmware boots at either one.
+# The brewery is listed first; ties go to it.
+wifi:
+  id: wifi_id
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+    - ssid: !secret coast_wifi_ssid
+      password: !secret coast_wifi_password
+  min_auth_mode: WPA2

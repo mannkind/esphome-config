@@ -1,7 +1,13 @@
-# Vendored from esphome-litter-robot LR4/2026.9.0
+# Vendored from esphome-litter-robot LR4/2026.9.1
 #   packages/litter-robot4/sleep-schedule.yaml
 #
-# Unmodified from upstream.
+# Local changes from upstream:
+#   - Dropped the `time:` block, the `litter_robot4: time_id:` line and the 24h
+#     sync interval that 2026.9.1 moved in here. base.yaml keeps that wiring and
+#     points at homeassistant_time from packages/global.yaml.
+
+packages:
+  sleep_override: !include sleep-override.yaml
 
 switch:
   - platform: litter_robot4

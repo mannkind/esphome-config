@@ -1,0 +1,88 @@
+# Vendored from esphome-litter-robot LR4/2026.9.1
+#   packages/litter-robot4/custom-status.yaml
+#
+# New in 2026.9.1. The "Status" template sensor and the update_status script
+# used to live in base.yaml. Include this last: it !extends entities the other
+# packages define.
+#
+# Local changes from upstream:
+#   - Renamed the template status sensor's id to status_text. `status` is
+#     reserved once the status binary_sensor platform is loaded, which
+#     packages/global.yaml does. The entity name is unchanged.
+
+text_sensor:
+  - platform: litter_robot4
+    id: !extend robot_status
+    on_value:
+      - script.execute: update_status
+  - platform: litter_robot4
+    id: !extend power_type
+    on_value:
+      - script.execute: update_status
+  - platform: litter_robot4
+    id: !extend fault
+    on_value:
+      - script.execute: update_status
+  - platform: template
+    id: status_text
+    name: "Status"
+    icon: "mdi:information"
+
+binary_sensor:
+  - platform: litter_robot4
+    id: !extend curtain_detected
+    on_state:
+      - script.execute: update_status
+  - platform: litter_robot4
+    id: !extend weight_detected
+    on_state:
+      - script.execute: update_status
+  - platform: litter_robot4
+    id: !extend sleeping
+    on_state:
+      - script.execute: update_status
+  - platform: template
+    id: !extend cat_confirmed
+    on_state:
+      - script.execute: update_status
+
+select:
+  - platform: litter_robot4
+    id: !extend wifi_status
+    on_value:
+      then:
+        - script.execute: update_status
+
+script:
+  - id: update_status
+    then:
+      - lambda: |-
+          std::string result = id(robot_status).state;
+
+          if (result == "Cat detected" && !id(curtain_detected).state && !id(weight_detected).state) {
+            result = "Waiting to cycle";
+          } else if (result == "Clean cycle in progress" && (id(curtain_detected).state || id(weight_detected).state)) {
+            result = "Cycle interrupted";
+          } else if (id(sleeping).state && result == "Ready") {
+            result = "Sleeping";
+          }
+
+          if (!id(fault).state.empty() && id(fault).state != "None") {
+            result = "Fault detected";
+          }
+
+          if (id(power_type).state == "Battery") {
+            result = "On battery";
+          }
+
+          if (id(wifi_status).current_option() == "Off") {
+            result = "WiFi disabled";
+          }
+
+          if (id(smart_cat_detection).state && !id(cat_confirmed).state && (result == "Cat detected" || result == "Waiting to cycle")) {
+            return;
+          }
+
+          if (!result.empty() && result != id(status_text).state) {
+            id(status_text).publish_state(result);
+          }

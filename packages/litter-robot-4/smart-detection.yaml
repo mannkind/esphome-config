@@ -1,77 +1,119 @@
-# Vendored from esphome-litter-robot LR4/2026.9.0
+# Vendored from esphome-litter-robot LR4/2026.9.1
 #   packages/litter-robot4/smart-detection.yaml
 #
-# Local changes from upstream:
-#   - on_boot written in list form so it merges with base.yaml's on_boot rather
-#     than colliding with it.
-
-esphome:
-  on_boot:
-    - then:
-        - if:
-            condition:
-              lambda: "return id(smart_detection_enabled);"
-            then:
-              - switch.turn_on: smart_cat_detection
+# Rewritten upstream in 2026.9.1: event-driven instead of a 1s interval, the
+# smart_detection_enabled global is gone (the switch state is read directly),
+# and cat_confirmed is a template binary_sensor rather than a global. The old
+# local on_boot workaround went with the global it restored.
+#
+# Unmodified from upstream.
 
 globals:
-  - id: smart_detection_enabled
-    type: bool
-    restore_value: yes
-    initial_value: "true"
-  - id: cat_confirmed
+  - id: cat_pending
     type: bool
     restore_value: no
     initial_value: "false"
-  - id: cat_clear_seconds
-    type: uint32_t
-    restore_value: no
-    initial_value: "0"
 
 switch:
   - platform: template
     id: smart_cat_detection
     name: "Smart Cat Detection"
-    icon: "mdi:check-underline-circle-outline"
+    icon: "mdi:check-underline-circle"
     entity_category: config
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
-    on_turn_on:
-      - globals.set:
-          id: smart_detection_enabled
-          value: "true"
-    on_turn_off:
-      - globals.set:
-          id: smart_detection_enabled
-          value: "false"
+    on_state:
+      - script.execute: evaluate_cat_detection
 
-interval:
-  - interval: 1s
+text_sensor:
+  - platform: litter_robot4
+    id: !extend robot_status
+    on_value:
+      - script.execute: evaluate_cat_detection
+
+binary_sensor:
+  - platform: template
+    id: cat_confirmed
+    name: "Cat Confirmed"
+    internal: true
+  - platform: litter_robot4
+    id: !extend curtain_detected
+    on_state:
+      - script.execute: evaluate_cat_detection
+  - platform: litter_robot4
+    id: !extend weight_detected
+    on_state:
+      - script.execute: evaluate_cat_detection
+  - platform: litter_robot4
+    id: !extend sleeping
+    on_state:
+      - lambda: |-
+          // Re-arm the pending timeout once the robot wakes up.
+          if (!id(sleeping).state && id(cat_pending) && id(robot_status).state != "Cat detected")
+            id(cat_pending_expire)->execute();
+
+script:
+  - id: cat_reset_countdown
+    mode: restart
+    then:
+      - delay: 10s
+      - if:
+          condition:
+            lambda: |-
+              return id(smart_cat_detection).state && !id(cat_confirmed).state &&
+                     !id(curtain_detected).state && !id(weight_detected).state &&
+                     id(robot_status).state == "Cat detected";
+          then:
+            - button.press: reset
+
+  - id: cat_pending_expire
+    mode: restart
+    then:
+      - delay: 10s
+      - if:
+          condition:
+            lambda: "return id(cat_pending) && !id(sleeping).state;"
+          then:
+            - lambda: "id(cat_pending) = false;"
+
+  - id: evaluate_cat_detection
     then:
       - lambda: |-
-          if (!id(smart_detection_enabled)) {
-            id(cat_confirmed) = false;
-            id(cat_clear_seconds) = 0;
+          if (!id(smart_cat_detection).state) {
+            id(cat_confirmed).publish_state(false);
+            id(cat_pending) = false;
+            id(cat_reset_countdown)->stop();
+            id(cat_pending_expire)->stop();
             return;
           }
           const bool cat_detected = id(robot_status).state == "Cat detected";
-          const bool laser = id(laser_detect).state;
-          const bool weight = id(weight_detect).state;
+          const bool agreed = id(curtain_detected).state && id(weight_detected).state;
+          const bool neither = !id(curtain_detected).state && !id(weight_detected).state;
+
           if (!cat_detected) {
-            id(cat_confirmed) = false;
-            id(cat_clear_seconds) = 0;
+            id(cat_confirmed).publish_state(false);
+            id(cat_reset_countdown)->stop();
+            // Latch an overlap seen during sleep so the robot's delayed
+            // "Cat detected" report can still confirm the visit.
+            if (agreed) {
+              id(cat_pending) = true;
+              id(cat_pending_expire)->execute();
+            }
             return;
           }
-          if (laser && weight) {
-            if (!id(cat_confirmed))
-              id(update_status)->execute();
-            id(cat_confirmed) = true;
-            id(cat_clear_seconds) = 0;
-          } else if (!laser && !weight) {
-            id(cat_clear_seconds) += 1;
-            if (id(cat_clear_seconds) == 10 && !id(cat_confirmed)) {
-              id(reset).press();
-            }
+
+          if (agreed || id(cat_pending)) {
+            id(cat_confirmed).publish_state(true);
+            id(cat_pending) = false;
+            id(cat_pending_expire)->stop();
+            id(cat_reset_countdown)->stop();
+            return;
+          }
+
+          // Robot reports a cat but neither sensor agrees: reset it after 10s,
+          // unless it was already confirmed or exactly one sensor is active.
+          if (neither && !id(cat_confirmed).state) {
+            id(cat_reset_countdown)->execute();
           } else {
-            id(cat_clear_seconds) = 0;
+            id(cat_reset_countdown)->stop();
           }
