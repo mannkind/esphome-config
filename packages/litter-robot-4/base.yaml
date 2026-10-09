@@ -1,39 +1,27 @@
-# Vendored from esphome-litter-robot LR4/2026.9.1
-#   packages/litter-robot4/base.yaml
+# Vendored from esphome-litter-robot LR4/2026.10.0
+#   packages/litter-robot4/default.yaml
 #
 # Local changes from upstream:
-#   - Dropped upstream's `esp32:` block. The device file sets its own, because
-#     this board needs sram1_as_iram and a minimum_chip_revision.
-#   - Kept the time wiring here rather than where 2026.9.1 moved it
-#     (sleep-schedule.yaml): `time_id` points at homeassistant_time from
-#     packages/global.yaml, and the 24h sync interval lives here. The clock is
-#     not a sleep-schedule concern and base is always included.
-#   - Added an on_boot time sync. Upstream only syncs on a 24h interval, which
-#     leaves the robot's clock uncorrected for a day after a fresh flash.
-#   - Renamed "Sleeping" to "Sleep Status", to match the entity this device
-#     already exposes in Home Assistant.
-#
-# Upstream changes in 2026.9.1 that move entities, worth knowing before you go
-# looking for them:
-#   - The "Status" template sensor and its update_status script moved to
-#     custom-status.yaml; the hopper switch moved to hopper.yaml.
-#   - laser_detect/weight_detect are now curtain_detected/weight_detected.
-#   - bonnet_removed is now bonnet, and the component inverts it: it reads true
-#     when the bonnet is ON, not removed. The HA entity flips meaning.
-#   - The hopper_motor binary_sensor is gone from the component entirely; there
-#     is no replacement, and hopper.yaml's "Hopper Status" covers the ground.
-#   - New debug_mode switch.
+#   - Kept only the UART, component, and entity definitions. The device file
+#     owns the project wrapper, external component source, and ESP32 settings
+#     because this board needs sram1_as_iram and a minimum_chip_revision.
+#   - Kept time wiring here instead of sleep-schedule.yaml. It uses
+#     homeassistant_time from packages/global.yaml, syncs every 24 hours, and
+#     also syncs on boot once Home Assistant time is valid.
+#   - Renamed "Sleeping" to "Sleep Status" and left it disabled by default, to
+#     preserve the entity this device already exposes in Home Assistant.
 
 uart:
   - id: uart_bus
     tx_pin: GPIO19
-    rx_pin: GPIO5
+    rx_pin:
+      number: GPIO5
+      ignore_strapping_warning: true
     baud_rate: 256000
     rx_buffer_size: 2048
 
 litter_robot4:
   id: my_litter_robot4
-  time_id: homeassistant_time
 
 esphome:
   on_boot:
@@ -41,12 +29,14 @@ esphome:
       then:
         - wait_until:
             lambda: "return id(homeassistant_time).now().is_valid();"
-        - litter_robot4.sync_time: my_litter_robot4
+        - litter_robot4.sync_time:
+            time_id: homeassistant_time
 
 interval:
   - interval: 24h
     then:
-      - litter_robot4.sync_time: my_litter_robot4
+      - litter_robot4.sync_time:
+          time_id: homeassistant_time
 
 text_sensor:
   - platform: litter_robot4

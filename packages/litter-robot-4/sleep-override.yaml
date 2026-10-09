@@ -1,4 +1,4 @@
-# Vendored from esphome-litter-robot LR4/2026.9.1
+# Vendored from esphome-litter-robot LR4/2026.10.0
 #   packages/litter-robot4/sleep-override.yaml
 #
 # New in 2026.9.1. Pulled in by sleep-schedule.yaml, which is how upstream

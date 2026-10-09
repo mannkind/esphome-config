@@ -5,7 +5,9 @@ packages:
   lr4_sleep_schedule: !include packages/litter-robot-4/sleep-schedule.yaml
   lr4_wifi: !include packages/litter-robot-4/wifi.yaml
   lr4_hopper: !include packages/litter-robot-4/hopper.yaml
+  lr4_hopper_empty_detection: !include packages/litter-robot-4/hopper-empty-detection.yaml
   lr4_smart_detection: !include packages/litter-robot-4/smart-detection.yaml
+  lr4_auto_cycle: !include packages/litter-robot-4/auto-cycle.yaml
   lr4_cat_tracking: !include
     file: packages/litter-robot-4/cat-tracking.yaml
     vars:
@@ -29,7 +31,7 @@ external_components:
   source:
     type: git
     url: https://codeberg.org/Joseph-DiGiovanni/esphome-litter-robot.git
-    ref: LR4/2026.9.2
+    ref: LR4/stable
 
 logger:
   level: debug

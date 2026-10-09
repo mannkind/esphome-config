@@ -65,11 +65,12 @@ litter box skips these and sets its own `esp32:` block; it needs esp-idf w/
 - `sen66.yaml` — pins via `sen66_sda`/`sen66_scl`, plus
   `sen66_temperature_offset` and `sen66_humidity_trim`
 - `cat-wheel/` — globals, sensors, metrics, status, controls, logic, diagnostics
-- `litter-robot-4/` — vendored from esphome-litter-robot `LR4/2026.9.1`:
+- `litter-robot-4/` — vendored from esphome-litter-robot `LR4/2026.10.0`:
   `base`, `sleep-schedule` (which pulls in `sleep-override`), `wifi`, `hopper`,
-  `smart-detection`, `cat-tracking`, `custom-status`. Include `custom-status`
-  last; it `!extend`s entities the others define. Each file heads with the local
-  changes and why; recheck them on a version bump.
+  `hopper-empty-detection`, `smart-detection`, `auto-cycle`, `cat-tracking`,
+  and `custom-status`. Include `custom-status` last; it `!extend`s entities the
+  others define. Each file heads with the local changes and why; recheck them
+  on a version bump.
 
 ## Secrets
 

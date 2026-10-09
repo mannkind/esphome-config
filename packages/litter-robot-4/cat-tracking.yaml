@@ -1,58 +1,105 @@
-# Vendored from esphome-litter-robot LR4/2026.9.1
-#   packages/cat-tracking.yaml (moved out of packages/litter-robot4/ in 2026.9.1)
+# Vendored from esphome-litter-robot LR4/2026.10.0
+#   packages/cat-tracker/default.yaml
+#   packages/cat-tracker/weight-detection.yaml
 #
-# Unmodified from upstream. Kept under litter-robot-4/ here; nothing else in
-# this repo uses it.
+# Local changes from upstream:
+#   - Combined the tracker entities and weight-detection hook into one package.
+#   - Kept weight_sensor_id configurable for the device include.
 
 substitutions:
   weight_sensor_id: "last_cat_weight"
 
 cat_tracker:
   id: cat_tracker_hub
-  weight_sensor: ${weight_sensor_id}
-  tolerance: 0.6
+  weight_tolerance: 0.6
+  cats: [cat1, cat2, cat3, cat4]
 
 number:
   - platform: cat_tracker
-    id: cat1weight
-    name: "Cat 1 Weight"
+    id: cat1_weight_set
+    name: "Set Cat 1 Weight"
+    cat: cat1
     disabled_by_default: true
   - platform: cat_tracker
-    id: cat2weight
-    name: "Cat 2 Weight"
+    id: cat2_weight_set
+    name: "Set Cat 2 Weight"
+    cat: cat2
     disabled_by_default: true
   - platform: cat_tracker
-    id: cat3weight
-    name: "Cat 3 Weight"
+    id: cat3_weight_set
+    name: "Set Cat 3 Weight"
+    cat: cat3
     disabled_by_default: true
   - platform: cat_tracker
-    id: cat4weight
-    name: "Cat 4 Weight"
+    id: cat4_weight_set
+    name: "Set Cat 4 Weight"
+    cat: cat4
     disabled_by_default: true
 
 sensor:
   - platform: cat_tracker
-    id: cat1_visits
-    name: "Cat 1 Visits"
-    cat_weight: cat1weight
-    disabled_by_default: true
+    cat: cat1
+    weight:
+      id: cat1_weight
+      name: "Cat 1 Weight"
+      disabled_by_default: true
+    visits_count:
+      id: cat1_visits
+      name: "Cat 1 Visits"
+      disabled_by_default: true
   - platform: cat_tracker
-    id: cat2_visits
-    name: "Cat 2 Visits"
-    cat_weight: cat2weight
-    disabled_by_default: true
+    cat: cat2
+    weight:
+      id: cat2_weight
+      name: "Cat 2 Weight"
+      disabled_by_default: true
+    visits_count:
+      id: cat2_visits
+      name: "Cat 2 Visits"
+      disabled_by_default: true
   - platform: cat_tracker
-    id: cat3_visits
-    name: "Cat 3 Visits"
-    cat_weight: cat3weight
-    disabled_by_default: true
+    cat: cat3
+    weight:
+      id: cat3_weight
+      name: "Cat 3 Weight"
+      disabled_by_default: true
+    visits_count:
+      id: cat3_visits
+      name: "Cat 3 Visits"
+      disabled_by_default: true
   - platform: cat_tracker
-    id: cat4_visits
-    name: "Cat 4 Visits"
-    cat_weight: cat4weight
-    disabled_by_default: true
+    cat: cat4
+    weight:
+      id: cat4_weight
+      name: "Cat 4 Weight"
+      disabled_by_default: true
+    visits_count:
+      id: cat4_visits
+      name: "Cat 4 Visits"
+      disabled_by_default: true
+  - id: !extend ${weight_sensor_id}
+    on_value:
+      - cat_tracker.record_visit:
+          weight: !lambda "return x;"
 
 button:
   - platform: cat_tracker
-    id: cat_tracker_reset
-    name: "Cat Tracker Reset"
+    id: cat1_tracker_reset
+    name: "Cat 1 Tracker Reset"
+    cat: cat1
+    disabled_by_default: true
+  - platform: cat_tracker
+    id: cat2_tracker_reset
+    name: "Cat 2 Tracker Reset"
+    cat: cat2
+    disabled_by_default: true
+  - platform: cat_tracker
+    id: cat3_tracker_reset
+    name: "Cat 3 Tracker Reset"
+    cat: cat3
+    disabled_by_default: true
+  - platform: cat_tracker
+    id: cat4_tracker_reset
+    name: "Cat 4 Tracker Reset"
+    cat: cat4
+    disabled_by_default: true

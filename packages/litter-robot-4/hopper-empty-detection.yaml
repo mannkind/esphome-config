@@ -1,0 +1,66 @@
+# Vendored from esphome-litter-robot LR4/2026.10.0
+#   packages/common/hopper-empty-detection.yaml
+#
+# Unmodified from upstream.
+
+substitutions:
+  hopper_status_sensor_id: hopper_status
+  litter_level_sensor_id: litter_level
+
+sensor:
+  - id: !extend ${litter_level_sensor_id}
+    on_value:
+      - lambda: |-
+          if (!id(waiting_for_level))
+            return;
+          id(waiting_for_level) = false;
+          int litter_level_drop = id(previous_litter_level) - x;
+          id(hopper_empty).publish_state(litter_level_drop >= 2);
+          id(update_hopper_status)->execute();
+
+text_sensor:
+  - id: !extend ${hopper_status_sensor_id}
+    internal: true
+    on_value:
+      - lambda: |-
+          if (x == "Running") {
+            id(previous_litter_level) = id(${litter_level_sensor_id}).state;
+            id(waiting_for_level) = true;
+          } else if (x != "Ready") {
+            id(waiting_for_level) = false;
+            if (x == "Disabled" || x == "Not connected")
+              id(hopper_empty).publish_state(false);
+          }
+          id(update_hopper_status)->execute();
+
+  - platform: template
+    id: hopper_status_custom
+    name: "Hopper Status"
+    icon: "mdi:cup"
+
+binary_sensor:
+  - platform: template
+    id: hopper_empty
+    name: "Hopper Empty"
+    icon: "mdi:cup-off-outline"
+
+script:
+  - id: update_hopper_status
+    then:
+      - lambda: |-
+          std::string value = id(${hopper_status_sensor_id}).state;
+          // Only show "Needs refill" once we are not mid-run waiting for the level reading.
+          if (!id(waiting_for_level) && id(hopper_empty).state && value == "Ready")
+            value = "Needs refill";
+          if (!value.empty() && value != id(hopper_status_custom).state)
+            id(hopper_status_custom).publish_state(value);
+
+globals:
+  - id: waiting_for_level
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: previous_litter_level
+    type: float
+    restore_value: no
+    initial_value: "0"

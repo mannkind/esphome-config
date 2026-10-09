@@ -1,4 +1,4 @@
-# Vendored from esphome-litter-robot LR4/2026.9.1
+# Vendored from esphome-litter-robot LR4/2026.10.0
 #   packages/litter-robot4/custom-status.yaml
 #
 # New in 2026.9.1. The "Status" template sensor and the update_status script

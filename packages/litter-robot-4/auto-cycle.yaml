@@ -1,0 +1,61 @@
+# Vendored from esphome-litter-robot LR4/2026.10.0
+#   packages/litter-robot4/auto-cycle.yaml
+#
+# Unmodified from upstream.
+
+switch:
+  - platform: template
+    id: auto_cycle
+    name: "Auto Cycle"
+    icon: "mdi:auto-mode"
+    entity_category: config
+    disabled_by_default: true
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - script.execute: evaluate_auto_cycle
+    on_turn_off:
+      - script.execute: evaluate_auto_cycle
+
+binary_sensor:
+  - id: !extend weight_detected
+    on_state:
+      - script.execute: evaluate_auto_cycle
+  - id: !extend curtain_detected
+    on_state:
+      - script.execute: evaluate_auto_cycle
+  - id: !extend sleeping
+    on_state:
+      - script.execute: evaluate_auto_cycle
+
+text_sensor:
+  - id: !extend robot_status
+    on_value:
+      - script.execute: evaluate_auto_cycle
+
+script:
+  - id: evaluate_auto_cycle
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return !id(auto_cycle).state && !id(sleeping).state &&
+                     id(robot_status).state == "Cat detected" &&
+                     !id(curtain_detected).state && !id(weight_detected).state;
+          then:
+            - script.execute: cancel_pending_cycle
+          else:
+            - script.stop: cancel_pending_cycle
+
+  - id: cancel_pending_cycle
+    mode: restart
+    then:
+      - delay: 60s
+      - if:
+          condition:
+            lambda: |-
+              return !id(auto_cycle).state && !id(sleeping).state &&
+                     id(robot_status).state == "Cat detected" &&
+                     !id(curtain_detected).state && !id(weight_detected).state;
+          then:
+            - button.press: reset

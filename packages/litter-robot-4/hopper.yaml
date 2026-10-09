@@ -1,72 +1,19 @@
-# Vendored from esphome-litter-robot LR4/2026.9.1
+# Vendored from esphome-litter-robot LR4/2026.10.0
 #   packages/litter-robot4/hopper.yaml
 #
-# New in 2026.9.1. The hopper switch used to live in base.yaml; the refill
-# tracking around it is new.
-#
 # Local changes from upstream:
-#   - Renamed "Hopper" to "Litter Hopper" and enabled the switch, to match the
-#     entity this device already exposes in Home Assistant.
+#   - Renamed "Hopper" to "Litter Hopper" and enabled the switch, to preserve
+#     the entity this device already exposes in Home Assistant.
+
+text_sensor:
+  - platform: litter_robot4
+    type: hopper_status
+    id: hopper_status
+    name: "Hopper Status"
+    disabled_by_default: true
 
 switch:
   - platform: litter_robot4
     type: litter_hopper
     id: litter_hopper
     name: "Litter Hopper"
-
-sensor:
-  - id: !extend litter_level
-    on_value:
-      - lambda: |-
-          if (!id(waiting_for_level))
-            return;
-          id(waiting_for_level) = false;
-          int litter_level_drop = id(previous_litter_level) - x;
-          id(hopper_needs_refill) = (litter_level_drop >= 2);
-          id(update_hopper_status)->execute();
-
-text_sensor:
-  - platform: litter_robot4
-    type: hopper_status
-    id: hopper_status_raw
-    name: "Hopper Status Raw"
-    internal: true
-    on_value:
-      - lambda: |-
-          if (x == "Running") {
-            id(previous_litter_level) = id(litter_level).state;
-            id(waiting_for_level) = true;
-          } else if (x != "Ready") {
-            id(waiting_for_level) = false;
-            if (x == "Disabled" || x == "Not connected")
-              id(hopper_needs_refill) = false;
-          }
-          id(update_hopper_status)->execute();
-  - platform: template
-    id: hopper_status
-    name: "Hopper Status"
-    icon: "mdi:cup"
-
-script:
-  - id: update_hopper_status
-    then:
-      - lambda: |-
-          std::string value = id(hopper_status_raw).state;
-          if (id(hopper_needs_refill) && value == "Ready")
-            value = "Needs refill";
-          if (!value.empty() && value != id(hopper_status).state)
-            id(hopper_status).publish_state(value);
-
-globals:
-  - id: waiting_for_level
-    type: bool
-    restore_value: no
-    initial_value: "false"
-  - id: hopper_needs_refill
-    type: bool
-    restore_value: no
-    initial_value: "false"
-  - id: previous_litter_level
-    type: float
-    restore_value: no
-    initial_value: "0"

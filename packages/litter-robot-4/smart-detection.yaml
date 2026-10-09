@@ -1,15 +1,14 @@
-# Vendored from esphome-litter-robot LR4/2026.9.1
+# Vendored from esphome-litter-robot LR4/2026.10.0
 #   packages/litter-robot4/smart-detection.yaml
-#
-# Rewritten upstream in 2026.9.1: event-driven instead of a 1s interval, the
-# smart_detection_enabled global is gone (the switch state is read directly),
-# and cat_confirmed is a template binary_sensor rather than a global. The old
-# local on_boot workaround went with the global it restored.
 #
 # Unmodified from upstream.
 
 globals:
   - id: cat_pending
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: smart_detect_ready
     type: bool
     restore_value: no
     initial_value: "false"
@@ -29,6 +28,9 @@ text_sensor:
   - platform: litter_robot4
     id: !extend robot_status
     on_value:
+      - lambda: |-
+          if (x == "Ready")
+            id(smart_detect_ready) = true;
       - script.execute: evaluate_cat_detection
 
 binary_sensor:
@@ -86,6 +88,11 @@ script:
             id(cat_pending_expire)->stop();
             return;
           }
+
+          // Don't evaluate until the robot has reached Ready since boot
+          if (!id(smart_detect_ready))
+            return;
+
           const bool cat_detected = id(robot_status).state == "Cat detected";
           const bool agreed = id(curtain_detected).state && id(weight_detected).state;
           const bool neither = !id(curtain_detected).state && !id(weight_detected).state;
