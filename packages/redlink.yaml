@@ -1,0 +1,109 @@
+# Replaces rf-proxy.yaml on the brewery node; the same CC1101 cannot do both.
+external_components:
+  - source:
+      type: git
+      url: https://github.com/mannkind/esphome-redlink
+      ref: main
+    components: [redlink]
+
+logger:
+  baud_rate: 0
+
+spi:
+  clk_pin:
+    number: GPIO45
+    ignore_strapping_warning: true
+  miso_pin:
+    number: GPIO47
+    allow_other_uses: true
+  mosi_pin:
+    number: GPIO46
+    ignore_strapping_warning: true
+  interface: spi3
+
+climate:
+  - platform: redlink
+    id: redlink_thermostat
+    name: RedLINK Thermostat
+    # TX defaults ON for normal HA control/status; boot never enrolls or replays HVAC commands.
+    receive_only: false
+    cs_pin: GPIO48
+    gdo0_pin: GPIO42
+    miso_pin:
+      number: GPIO47
+      allow_other_uses: true
+    # Fresh pairing-test identity; distinct from previous ESPHome b14f, HackRF b14e, and physical d6e0.
+    # Enrollment requires the explicit Pair Gateway button, never boot.
+    network_id: 0x389e
+    gateway_id: 0xc27a
+    frequency: 904195310
+    # Approximate CC1101 calibration/settling allowance; NOT RF-validated.
+    tx_advance_us: 800
+    discovery_status:
+      name: RedLINK Discovery
+      internal: true
+    result:
+      name: RedLINK Transaction
+      internal: true
+    acknowledged:
+      name: RedLINK Acknowledged
+    verified:
+      name: RedLINK Readback Verified
+    clock_locked:
+      name: RedLINK Clock Locked
+    radio_healthy:
+      name: RedLINK Radio Healthy
+    command_pending:
+      name: RedLINK Command Pending
+    emergency_heat:
+      name: RedLINK Emergency Heat
+    system_mode:
+      name: RedLINK System Mode
+    heat_hold_until:
+      name: RedLINK Heat Hold Until
+    cool_hold_until:
+      name: RedLINK Cool Hold Until
+    pairing_status:
+      name: RedLINK Pairing Status
+      internal: true
+    paired:
+      name: RedLINK Paired
+
+switch:
+  - platform: template
+    name: RedLINK Transmit Enabled
+    id: redlink_transmit_enabled
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_ON
+    turn_on_action:
+      - lambda: id(redlink_thermostat).set_transmit_enabled(true);
+    turn_off_action:
+      - lambda: id(redlink_thermostat).set_transmit_enabled(false);
+
+button:
+  - platform: template
+    name: RedLINK Pair Gateway
+    entity_category: config
+    on_press:
+      - lambda: id(redlink_thermostat).pair_gateway();
+
+  - platform: template
+    name: RedLINK Complete Gateway Association
+    entity_category: config
+    on_press:
+      - lambda: id(redlink_thermostat).complete_gateway_association();
+
+  - platform: template
+    name: RedLINK Refresh Status
+    on_press:
+      - lambda: id(redlink_thermostat).refresh();
+
+api:
+  actions:
+    - action: redlink_temporary_hold_until
+      variables:
+        hour: int
+        minute: int
+      then:
+        - lambda: id(redlink_thermostat).temporary_hold_until(hour, minute);
