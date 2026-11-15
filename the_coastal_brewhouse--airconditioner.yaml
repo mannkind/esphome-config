@@ -6,9 +6,6 @@ packages:
 substitutions:
   slug: coast-air-conditioner
   name: "Coast Air Conditioner"
-  visual_min_temperature: "17 °C"
-  visual_max_temperature: "30 °C"
-  visual_temperature_step: "1.0 °C"
 
 esphome:
   on_boot:
@@ -49,11 +46,11 @@ climate:
     timeout: 2s
     num_attempts: 3
     autoconf: true
-    beeper: true
+    beeper: false
     visual:
-      min_temperature: "${visual_min_temperature}"
-      max_temperature: "${visual_max_temperature}"
-      temperature_step: "${visual_temperature_step}"
+      min_temperature: "50 °F"
+      max_temperature: "90 °F"
+      temperature_step: "1 °F"
     outdoor_temperature:
       name: Outdoor Temperature
     power_usage:
@@ -80,7 +77,7 @@ sensor:
     unit_of_measurement: "°C"
     device_class: temperature
     state_class: measurement
-    accuracy_decimals: 1
+    accuracy_decimals: 0
     update_interval: 30s
     lambda: |-
       return id(midea_climate).current_temperature;
