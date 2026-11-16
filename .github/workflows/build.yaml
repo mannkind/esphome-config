@@ -19,7 +19,6 @@ jobs:
           - the_brewery--cat-laser.yaml
           - the_brewery--cat-litter-box.yaml
           - the_brewery--cat-wheel-trainer.yaml
-          - the_brewery--co2-office.yaml
           - the_brewery--fireplace.yaml
           - the_brewery--garage.yaml
           - the_brewery--outdoor-patio-outlets.yaml

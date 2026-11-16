@@ -20,7 +20,6 @@ because each has its own credentials.
 | `cat-laser`                                    | Pan/tilt servos and a laser                                                                                                                          |
 | `cat-litter-box`                               | Litter-Robot 4 over UART; external component. Roams: it knows both the brewery and coastal brewhouse WiFi, and lives at the brewery most of the time |
 | `cat-wheel-trainer`                            | Exercise wheel w/ treat dispenser; logic in `packages/cat-wheel/`                                                                                    |
-| `co2-office`                                   | SenseAir CO2                                                                                                                                         |
 | `fireplace`                                    | One relay                                                                                                                                            |
 | `garage`                                       | Door controller                                                                                                                                      |
 | `outdoor-patio-outlets`                        | Outlets w/ energy monitoring                                                                                                                         |
@@ -43,6 +42,7 @@ because each has its own credentials.
 | File       | What it is      |
 | ---------- | --------------- |
 | `bt-proxy` | Bluetooth proxy |
+| `co2-main` | SenseAir CO2 |
 
 ## packages/
 
