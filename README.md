@@ -65,12 +65,21 @@ litter box skips these and sets its own `esp32:` block; it needs esp-idf w/
 - `sen66.yaml` — pins via `sen66_sda`/`sen66_scl`, plus
   `sen66_temperature_offset` and `sen66_humidity_trim`
 - `cat-wheel/` — globals, sensors, metrics, status, controls, logic, diagnostics
-- `litter-robot-4/` — vendored from esphome-litter-robot `LR4/2026.10.0`:
+- `litter-robot-4/` — vendored from esphome-litter-robot `LR4/2026.10.1`
+  (peeled commit `e8b629773614b0aa99d510c41c597bc602eeafcc`, matching
+  `LR4/stable` when checked on 2026-11-15):
   `base`, `sleep-schedule` (which pulls in `sleep-override`), `wifi`, `hopper`,
   `hopper-empty-detection`, `smart-detection`, `auto-cycle`, `cat-tracking`,
   and `custom-status`. Include `custom-status` last; it `!extend`s entities the
   others define. Each file heads with the local changes and why; recheck them
   on a version bump.
+  The 2026.9.x → 2026.10.x migration uses explicit cat IDs (`cat1`–`cat4`);
+  upstream imports their existing "Cat N Weight" calibration and visit counts.
+  Tracker resets are now per cat. Home Assistant automations must account for
+  renamed Curtain/Weight Detected and Hopper Status entities, and for Bonnet
+  now meaning installed (the former Bonnet Removed had opposite polarity).
+  No WasteSense hardware is configured; 2026.10.1's WasteSense additions are
+  intentionally not enabled.
 
 ## Secrets
 

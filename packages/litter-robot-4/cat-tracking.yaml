@@ -1,10 +1,16 @@
-# Vendored from esphome-litter-robot LR4/2026.10.0
+# Vendored from esphome-litter-robot LR4/2026.10.1
+# Commit: e8b629773614b0aa99d510c41c597bc602eeafcc
 #   packages/cat-tracker/default.yaml
 #   packages/cat-tracker/weight-detection.yaml
 #
 # Local changes from upstream:
 #   - Combined the tracker entities and weight-detection hook into one package.
 #   - Kept weight_sensor_id configurable for the device include.
+#   - Explicit legacy_object_id values preserve the former weight-number
+#     preference keys when importing saved cat weights and visit counts.
+#     Keep cat IDs stable after migration: new preferences are keyed by cat ID.
+#   - Weight-only visits need no WasteSense, waste classification, or odor
+#     control packages; do not include a second visit-recording hook.
 
 substitutions:
   weight_sensor_id: "last_cat_weight"
@@ -12,7 +18,15 @@ substitutions:
 cat_tracker:
   id: cat_tracker_hub
   weight_tolerance: 0.6
-  cats: [cat1, cat2, cat3, cat4]
+  cats:
+    - id: cat1
+      legacy_object_id: "Cat 1 Weight"
+    - id: cat2
+      legacy_object_id: "Cat 2 Weight"
+    - id: cat3
+      legacy_object_id: "Cat 3 Weight"
+    - id: cat4
+      legacy_object_id: "Cat 4 Weight"
 
 number:
   - platform: cat_tracker

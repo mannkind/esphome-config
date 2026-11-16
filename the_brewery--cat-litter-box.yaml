@@ -31,7 +31,7 @@ external_components:
   source:
     type: git
     url: https://codeberg.org/Joseph-DiGiovanni/esphome-litter-robot.git
-    ref: LR4/stable
+    ref: LR4/2026.10.1
 
 logger:
   level: debug
